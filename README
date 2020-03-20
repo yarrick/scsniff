@@ -1,0 +1,4 @@
+scsniff - Smartcard sniffer for Linux
+
+Meant to record communication between smartcard and reader, captured with
+"season interface" (from satellite tv hacking scene).
