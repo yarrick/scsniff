@@ -7,9 +7,9 @@
 #include <asm/termbits.h>
 #include <sys/ioctl.h>
 
-#include "atr.h"
+#include "session.h"
 
-static void setup_serial(int fd, int speed) {
+static void setup_serial(int fd, unsigned speed) {
     struct termios2 tio;
     memset(&tio, 0, sizeof(tio));
     // 8 data bits, readonly, ignore carrier, even parity, 2 stop bits,
@@ -26,34 +26,28 @@ void main(int argc, char **argv) {
             fprintf(stderr, "open failed: %d\n", fd);
             return;
     }
-    int speed = 9600;
+    unsigned baudrate = 9600;
     if (argc > 1) {
-        speed = atoi(argv[1]);
+        baudrate = atoi(argv[1]);
     }
-    setup_serial(fd, speed);
-    fprintf(stderr, "Opened %s at %d\n", portname, speed);
+    setup_serial(fd, baudrate);
+    fprintf(stderr, "Opened %s at %d\n", portname, baudrate);
 
-    struct atr_parser parser;
-    atr_init(&parser);
+    struct session session;
+    session_init(&session, baudrate, setup_serial);
 
     ioctl(fd, TIOCMIWAIT, TIOCM_CAR);
     fprintf(stderr, "Got Reset\n");
 
     int loops = 0;
-    int count = 0;
-    int wait_atr = 1;
     while (1) {
         unsigned char c;
         if (read(fd, &c, 1) >0) {
-            if (loops > 10000) printf("\n");
             printf("%02X ", c);
             fflush(0);
             loops = 0;
-            count++;
-            // Filter out initial possible 0xff byte for now
-            if (wait_atr && (count > 1 || c != 0xff) && atr_at_end(&parser, c)) {
-                printf("- ATR\n");
-                wait_atr = 0;
+            if (session_add_byte(&session, c)) {
+                printf("\n");
             }
         }
         loops++;

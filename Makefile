@@ -1,6 +1,6 @@
 default: scsniff
 
-DEPS = atr.h
+DEPS = atr.h session.h
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $<
@@ -8,5 +8,5 @@ DEPS = atr.h
 clean:
 	rm -f scsniff *.o
 
-scsniff: scsniff.o atr.o
+scsniff: scsniff.o atr.o session.o
 	$(CC) -o $@ $^
