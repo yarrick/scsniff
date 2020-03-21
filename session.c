@@ -5,6 +5,7 @@
 static void session_reset(struct session *session) {
     session->state = INIT;
     atr_init(&session->atr);
+    pps_init(&session->pps);
     session->set_baudrate(session->serial_fd, session->base_baudrate);
 }
 
@@ -31,6 +32,24 @@ int session_add_byte(struct session *session, unsigned char data) {
                 return end_atr;
             }
         case IDLE:
+            if (data == 0xFF && pps_done(&session->pps, NULL, NULL) == 0) {
+                // PPS start byte
+                session->state = PPS;
+                return pps_analyze(&session->pps, data);
+            }
             return 0;
+        case PPS:
+            {
+                int end_pps = pps_analyze(&session->pps, data);
+                if (end_pps) {
+                    unsigned proto = 0;
+                    unsigned speed = 0xFF;
+                    if (pps_done(&session->pps, &proto, &speed)) {
+                        session->state = IDLE;
+                    }
+                }
+                return end_pps;
+            }
     }
+    return 0;
 }

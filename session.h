@@ -2,6 +2,7 @@
 #define SCSNIFF_SESSION_H
 
 #include "atr.h"
+#include "pps.h"
 
 enum session_state {
     INIT = 0,
@@ -19,6 +20,7 @@ struct session {
     unsigned base_baudrate;
     enum session_state state;
     struct atr atr;
+    struct pps pps;
 };
 
 void session_init(struct session *session, set_baudrate_fn set_baudrate,
