@@ -7,6 +7,8 @@
 #include <asm/termbits.h>
 #include <sys/ioctl.h>
 
+#include "atr.h"
+
 static void setup_serial(int fd, int speed) {
     struct termios2 tio;
     memset(&tio, 0, sizeof(tio));
@@ -31,11 +33,15 @@ void main(int argc, char **argv) {
     setup_serial(fd, speed);
     fprintf(stderr, "Opened %s at %d\n", portname, speed);
 
+    struct atr_parser parser;
+    atr_init(&parser);
+
     ioctl(fd, TIOCMIWAIT, TIOCM_CAR);
     fprintf(stderr, "Got Reset\n");
 
     int loops = 0;
     int count = 0;
+    int wait_atr = 1;
     while (1) {
         unsigned char c;
         if (read(fd, &c, 1) >0) {
@@ -44,8 +50,12 @@ void main(int argc, char **argv) {
             fflush(0);
             loops = 0;
             count++;
+            // Filter out initial possible 0xff byte for now
+            if (wait_atr && (count > 1 || c != 0xff) && atr_at_end(&parser, c)) {
+                printf("- ATR\n");
+                wait_atr = 0;
+            }
         }
         loops++;
     }
-    printf("\n%d bytes\n", count);
 }

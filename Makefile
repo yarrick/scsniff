@@ -1,7 +1,12 @@
 default: scsniff
 
-clean:
-	rm -f scsniff
+DEPS = atr.h
 
-scsniff: scsniff.c
-	cc -o $@ $<
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $<
+
+clean:
+	rm -f scsniff *.o
+
+scsniff: scsniff.o atr.o
+	$(CC) -o $@ $^
