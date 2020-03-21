@@ -41,6 +41,7 @@ void session_reset(struct session *session) {
     session->state = INIT;
     atr_init(&session->atr);
     pps_init(&session->pps);
+    data_init(&session->data);
     session->set_baudrate(session->serial_fd, session->base_baudrate);
 }
 
@@ -88,6 +89,10 @@ int session_add_byte(struct session *session, unsigned char data) {
                 session->state = PPS;
                 return pps_analyze(&session->pps, data);
             }
+            if (session->protocol_version == 1) {
+                session->state = T1_DATA;
+                return data_t1_analyze(&session->data, data);
+            }
             return 0;
         case PPS:
             {
@@ -106,6 +111,12 @@ int session_add_byte(struct session *session, unsigned char data) {
                     }
                 }
                 return end_pps;
+            }
+        case T1_DATA:
+            {
+                int end_data = data_t1_analyze(&session->data, data);
+                if (end_data) session->state = IDLE;
+                return end_data;
             }
     }
     return 0;

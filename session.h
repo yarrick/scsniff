@@ -2,6 +2,7 @@
 #define SCSNIFF_SESSION_H
 
 #include "atr.h"
+#include "data.h"
 #include "pps.h"
 
 enum session_state {
@@ -9,7 +10,7 @@ enum session_state {
     ATR,
     IDLE,
     PPS,
-    DATA
+    T1_DATA,
 };
 
 typedef void (*set_baudrate_fn)(int fd, unsigned baudrate);
@@ -21,6 +22,7 @@ struct session {
     enum session_state state;
     struct atr atr;
     struct pps pps;
+    struct data data;
     unsigned protocol_version;
 };
 
