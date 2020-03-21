@@ -70,7 +70,16 @@ int session_add_byte(struct session *session, unsigned char data) {
         case ATR:
             {
                 int end_atr = atr_analyze(&session->atr, data);
-                if (end_atr) session->state = IDLE;
+                if (end_atr) {
+                    unsigned proto = 0xFF;
+                    atr_done(&session->atr, &proto);
+                    if (proto != 0xFF && proto != session->protocol_version) {
+                        session->protocol_version = proto;
+                        fprintf(stderr, "\n== Card requested protocol T=%d in ATR",
+                                session->protocol_version);
+                    }
+                    session->state = IDLE;
+                }
                 return end_atr;
             }
         case IDLE:

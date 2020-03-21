@@ -11,6 +11,7 @@ enum atr_state {
 struct atr {
     enum atr_state state;
     unsigned bytes_left;
+    unsigned first_protocol_suggested;
     unsigned max_protocol_suggested;
     unsigned num_historical_bytes;
 };
@@ -18,6 +19,8 @@ struct atr {
 void atr_init(struct atr *atr);
 
 int atr_analyze(struct atr *atr, unsigned char data);
+
+void atr_done(struct atr *atr, unsigned *new_proto);
 
 void atr_print_state(struct atr *atr);
 

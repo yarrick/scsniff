@@ -8,6 +8,7 @@ void atr_init(struct atr *atr) {
     memset(atr, 0, sizeof(struct atr));
     // State WAIT_T0, need two bytes
     atr->bytes_left = 2;
+    atr->first_protocol_suggested = 0xFF;
 }
 
 static int handle_t_bits(struct atr *atr, unsigned char data) {
@@ -45,21 +46,33 @@ int atr_analyze(struct atr *atr, unsigned char data) {
             atr->num_historical_bytes = data & 0xF;
             return handle_t_bits(atr, data);
         case WAIT_TD:
-            // Lower nibble of TD is suggested protocol
-            if (data & 0xF > atr->max_protocol_suggested) {
-                atr->max_protocol_suggested = data & 0xF;
+            {
+                unsigned char version = data & 0xF;
+                if (atr->first_protocol_suggested == 0xFF) {
+                    atr->first_protocol_suggested = version;
+                }
+                // Lower nibble of TD is suggested protocol (if not 15)
+                if (version < 15 && version > atr->max_protocol_suggested) {
+                    atr->max_protocol_suggested = version;
+                }
+                return handle_t_bits(atr, data);
             }
-            return handle_t_bits(atr, data);
         case WAIT_END:
             atr->state = ATR_DONE;
             return 1;
     }
 }
 
+void atr_done(struct atr *atr, unsigned *new_proto) {
+    if (new_proto && atr->first_protocol_suggested != 0xFF) {
+        *new_proto = atr->first_protocol_suggested;
+    }
+}
+
 void atr_print_state(struct atr *atr) {
     static const char* state_names[] =
         { "WAIT_T0", "WAIT_TD", "WAIT_END", "ATR_DONE" };
-    printf("State %s, need %d bytes (%d hist bytes, max proto %d)\n",
+    printf("State %s, need %d bytes (%d hist bytes, first proto %d, max proto %d)\n",
         state_names[atr->state], atr->bytes_left, atr->num_historical_bytes,
-        atr->max_protocol_suggested);
+        atr->first_protocol_suggested, atr->max_protocol_suggested);
 }
