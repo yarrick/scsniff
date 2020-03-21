@@ -37,7 +37,7 @@ static unsigned baud_divisor(unsigned char speed) {
 
 #define BASE_ETU (372)
 
-static void session_reset(struct session *session) {
+void session_reset(struct session *session) {
     session->state = INIT;
     atr_init(&session->atr);
     pps_init(&session->pps);

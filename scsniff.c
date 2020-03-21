@@ -19,6 +19,14 @@ static void setup_serial(int fd, unsigned speed) {
     ioctl(fd, TCSETS2, &tio);
 }
 
+static void reset(int fd, struct session *session) {
+    session_reset(session);
+    fprintf(stderr, "Waiting for reset..  ");
+    fflush(stderr);
+    ioctl(fd, TIOCMIWAIT, TIOCM_CAR);
+    fprintf(stderr, "Done\n");
+}
+
 void main(int argc, char **argv) {
     char *portname = "/dev/ttyUSB0";
     int fd = open(portname, O_RDONLY | O_NOCTTY | O_NDELAY);
@@ -36,20 +44,25 @@ void main(int argc, char **argv) {
     struct session session;
     session_init(&session, setup_serial, fd, baudrate);
 
-    ioctl(fd, TIOCMIWAIT, TIOCM_CAR);
-    fprintf(stderr, "Got Reset\n");
-
-    int loops = 0;
     while (1) {
-        unsigned char c;
-        if (read(fd, &c, 1) >0) {
-            printf("%02X ", c);
-            fflush(0);
-            loops = 0;
-            if (session_add_byte(&session, c)) {
-                printf("\n");
+        reset(fd, &session);
+        int loops = 0;
+        while (1) {
+            unsigned char c;
+            if (read(fd, &c, 1) >0) {
+                printf("%02X ", c);
+                fflush(0);
+                loops = 0;
+                if (session_add_byte(&session, c)) {
+                    printf("\n");
+                }
+            }
+            loops++;
+            if (loops > 3000000) {
+                printf("\n\n");
+                fprintf(stderr, "Timeout!\n");
+                break;
             }
         }
-        loops++;
     }
 }

@@ -27,6 +27,8 @@ struct session {
 void session_init(struct session *session, set_baudrate_fn set_baudrate,
                   int fd, unsigned baudrate);
 
+void session_reset(struct session *session);
+
 // Returns nonzero if byte was last in packet
 int session_add_byte(struct session *session, unsigned char data);
 
