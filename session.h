@@ -18,7 +18,7 @@ struct session {
     int serial_fd;
     unsigned base_baudrate;
     enum session_state state;
-    struct atr_parser atr;
+    struct atr atr;
 };
 
 void session_init(struct session *session, set_baudrate_fn set_baudrate,

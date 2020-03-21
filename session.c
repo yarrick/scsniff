@@ -26,7 +26,7 @@ int session_add_byte(struct session *session, unsigned char data) {
             // Fallthrough
         case ATR:
             {
-                int end_atr = atr_at_end(&session->atr, data);
+                int end_atr = atr_analyze(&session->atr, data);
                 if (end_atr) session->state = IDLE;
                 return end_atr;
             }

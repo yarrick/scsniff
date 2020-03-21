@@ -8,17 +8,17 @@ enum atr_state {
     ATR_DONE
 };
 
-struct atr_parser {
+struct atr {
     enum atr_state state;
     unsigned bytes_left;
     unsigned max_protocol_suggested;
     unsigned num_historical_bytes;
 };
 
-void atr_init(struct atr_parser *parser);
+void atr_init(struct atr *atr);
 
-int atr_at_end(struct atr_parser *parser, unsigned char data);
+int atr_analyze(struct atr *atr, unsigned char data);
 
-void atr_print_state(struct atr_parser *parser);
+void atr_print_state(struct atr *atr);
 
 #endif // SCSNIFF_ATR_H
