@@ -34,7 +34,7 @@ void main(int argc, char **argv) {
     fprintf(stderr, "Opened %s at %d\n", portname, baudrate);
 
     struct session session;
-    session_init(&session, baudrate, setup_serial);
+    session_init(&session, setup_serial, fd, baudrate);
 
     ioctl(fd, TIOCMIWAIT, TIOCM_CAR);
     fprintf(stderr, "Got Reset\n");

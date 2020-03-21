@@ -5,11 +5,14 @@
 static void session_reset(struct session *session) {
     session->state = INIT;
     atr_init(&session->atr);
+    session->set_baudrate(session->serial_fd, session->base_baudrate);
 }
 
-void session_init(struct session *session, unsigned baudrate,
-                  set_baudrate_fn set_baudrate) {
+void session_init(struct session *session, set_baudrate_fn set_baudrate,
+                  int fd, unsigned baudrate) {
     memset(session, 0, sizeof(struct session));
+    session->set_baudrate = set_baudrate;
+    session->serial_fd = fd;
     session->base_baudrate = baudrate;
     session_reset(session);
 }

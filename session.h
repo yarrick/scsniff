@@ -11,15 +11,18 @@ enum session_state {
     DATA
 };
 
+typedef void (*set_baudrate_fn)(int fd, unsigned baudrate);
+
 struct session {
+    set_baudrate_fn set_baudrate;
+    int serial_fd;
     unsigned base_baudrate;
     enum session_state state;
     struct atr_parser atr;
 };
 
-typedef void (*set_baudrate_fn)(int fd, unsigned baudrate);
-
-void session_init(struct session *session, unsigned baudrate, set_baudrate_fn set_baudrate);
+void session_init(struct session *session, set_baudrate_fn set_baudrate,
+                  int fd, unsigned baudrate);
 
 // Returns nonzero if byte was last in packet
 int session_add_byte(struct session *session, unsigned char data);
