@@ -10,6 +10,7 @@ enum session_state {
     ATR,
     IDLE,
     PPS,
+    T0_DATA,
     T1_DATA,
 };
 

@@ -89,6 +89,10 @@ int session_add_byte(struct session *session, unsigned char data) {
                 session->state = PPS;
                 return pps_analyze(&session->pps, data);
             }
+            if (session->protocol_version == 0) {
+                session->state = T0_DATA;
+                return data_t0_analyze(&session->data, data);
+            }
             if (session->protocol_version == 1) {
                 session->state = T1_DATA;
                 return data_t1_analyze(&session->data, data);
@@ -111,6 +115,12 @@ int session_add_byte(struct session *session, unsigned char data) {
                     }
                 }
                 return end_pps;
+            }
+        case T0_DATA:
+            {
+                int end_data = data_t0_analyze(&session->data, data);
+                if (end_data) session->state = IDLE;
+                return end_data;
             }
         case T1_DATA:
             {
