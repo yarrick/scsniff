@@ -27,19 +27,29 @@ static void reset(int fd, struct session *session) {
     fprintf(stderr, "Done\n");
 }
 
+static void usage(char *name) {
+    fprintf(stderr, "\nUsage: %s <device> [<baudrate>]\n", name);
+    exit(2);
+}
+
 void main(int argc, char **argv) {
-    char *portname = "/dev/ttyUSB0";
-    int fd = open(portname, O_RDONLY | O_NOCTTY | O_NDELAY);
+    if (argc < 2) usage(argv[0]);
+    int fd = open(argv[1], O_RDONLY | O_NOCTTY | O_NDELAY);
     if(fd < 0) {
-            fprintf(stderr, "open failed: %d\n", fd);
-            return;
+        fprintf(stderr, "Opening %s ", argv[1]);
+        perror("failed");
+        usage(argv[0]);
     }
-    unsigned baudrate = 9600;
-    if (argc > 1) {
-        baudrate = atoi(argv[1]);
+    int baudrate = 9600;
+    if (argc > 2) {
+        baudrate = atoi(argv[2]);
+    }
+    if (baudrate <= 0) {
+        fprintf(stderr, "Failed to parse baudrate '%s'\n", argv[2]);
+        usage(argv[0]);
     }
     setup_serial(fd, baudrate);
-    fprintf(stderr, "Opened %s at %d\n", portname, baudrate);
+    fprintf(stderr, "Opened %s at %d\n", argv[1], baudrate);
 
     struct session session;
     session_init(&session, setup_serial, fd, baudrate);
