@@ -21,6 +21,7 @@ struct session {
     enum session_state state;
     struct atr atr;
     struct pps pps;
+    unsigned protocol_version;
 };
 
 void session_init(struct session *session, set_baudrate_fn set_baudrate,
