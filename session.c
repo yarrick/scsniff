@@ -51,10 +51,10 @@ void session_reset(struct session *session) {
     session->set_baudrate(session->serial_fd, session->base_baudrate);
 }
 
-static void update_speed(struct session *session, unsigned speed) {
+static void update_speed(struct session *session, unsigned speed, char *phase) {
     unsigned new_etu = clock_conversion(speed) / baud_divisor(speed);
     unsigned baudrate = session->base_baudrate * BASE_ETU / ((float) new_etu);
-    fprintf(stderr,"== Switching to %d ticks per ETU (%d baud)\n", new_etu, baudrate);
+    fprintf(stderr,"== Switching to %d ticks per ETU (%d baud) after %s\n", new_etu, baudrate, phase);
     session->set_baudrate(session->serial_fd, baudrate);
 }
 
@@ -135,21 +135,21 @@ void session_add_byte(struct session *session, unsigned char data) {
         if (session->have_update) {
             unsigned proto = 0xFF;
             unsigned speed = 0xFF;
+            char *phase = "?";
             if (session->state == ATR) {
                 atr_done(&session->atr, &proto);
+                phase = "ATR";
             } else if (session->state == PPS) {
-                if (pps_done(&session->pps, &proto, &speed)) {
-                    session->protocol_version = proto;
-                    fprintf(stderr, "== PPS completed\n");
-                }
+                pps_done(&session->pps, &proto, &speed);
+                phase = "PPS";
             }
             if (proto != 0xFF && proto != session->protocol_version) {
                 session->protocol_version = proto;
-                fprintf(stderr, "== Switching to protocol T=%d\n",
-                        session->protocol_version);
+                fprintf(stderr, "== Switching to protocol T=%d after %s\n",
+                        session->protocol_version, phase);
             }
             if (speed != 0xFF) {
-                update_speed(session, speed);
+                update_speed(session, speed, phase);
             }
             session->have_update = 0;
             session->state = IDLE;
