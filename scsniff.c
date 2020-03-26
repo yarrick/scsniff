@@ -21,7 +21,7 @@ static void setup_serial(int fd, unsigned speed) {
 }
 
 static void wait_reset(int fd) {
-    fprintf(stderr, "Waiting for reset..  ");
+    fprintf(stderr, "== Waiting for reset..  ");
     fflush(stderr);
     ioctl(fd, TIOCMIWAIT, TIOCM_CAR);
     fprintf(stderr, "Done\n");
@@ -64,13 +64,13 @@ void main(int argc, char **argv) {
         fprintf(stderr, "Failed to parse baudrate '%s'\n", argv[2]);
         usage(argv[0]);
     }
-    setup_serial(fd, baudrate);
-    fprintf(stderr, "Opened %s at %d\n", argv[1], baudrate);
+    fprintf(stderr, "== Opened %s\n", argv[1]);
 
     struct session session;
     session_init(&session, handle_packet, setup_serial, fd, baudrate);
 
     while (1) {
+        fprintf(stderr, "== Speed: %d baud\n", baudrate);
         wait_reset(fd);
         int loops = 0;
         while (1) {
@@ -82,8 +82,7 @@ void main(int argc, char **argv) {
             loops++;
             if (loops > 3000000) {
                 session_reset(&session);
-                printf("\n\n");
-                fprintf(stderr, "Timeout!\n");
+                fprintf(stderr, "\n=========================\n== Timeout!\n");
                 break;
             }
         }
