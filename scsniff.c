@@ -45,7 +45,7 @@ static void handle_packet(struct packet *packet) {
         case NOISE:             printf("NOISE??"); break;
         case PACKET_TO_CARD:    printf("CARD<<<"); break;
         case PACKET_FROM_CARD:  printf("CARD>>>"); break;
-        case PACKET_UNKNOWN:    printf("CARD???"); break;
+        case PACKET_UNKNOWN:    printf("CARD<?>"); break;
         default:                printf("ERROR!!"); break;
     }
     printf(" |");
