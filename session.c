@@ -54,7 +54,8 @@ void session_reset(struct session *session) {
 static void update_speed(struct session *session, unsigned speed, char *phase) {
     unsigned new_etu = clock_conversion(speed) / baud_divisor(speed);
     unsigned baudrate = session->base_baudrate * BASE_ETU / ((float) new_etu);
-    fprintf(stderr,"== Switching to %d ticks per ETU (%d baud) after %s\n", new_etu, baudrate, phase);
+    fprintf(stderr, "== Switching to %d ticks per ETU (%d baud) after %s\n",
+            new_etu, baudrate, phase);
     session->set_baudrate(session->serial_fd, baudrate);
 }
 
