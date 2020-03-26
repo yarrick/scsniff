@@ -1,6 +1,8 @@
 #ifndef SCSNIFF_DATA_H
 #define SCSNIFF_DATA_H
 
+#include "result.h"
+
 enum data_t0_state {
     COMMAND = 0,
     PROCEDURE_BYTE,
@@ -26,12 +28,13 @@ struct data {
     unsigned t1_bytes_seen;
     unsigned t1_msg_length;
     unsigned t1_check_len;
+    unsigned t1_direction_from_card;
 };
 
 void data_init(struct data *data);
 
-int data_t0_analyze(struct data *data, unsigned char byte);
+enum result data_t0_analyze(struct data *data, unsigned char byte);
 
-int data_t1_analyze(struct data *data, unsigned char byte);
+enum result data_t1_analyze(struct data *data, unsigned char byte);
 
 #endif // SCSNIFF_DATA_H

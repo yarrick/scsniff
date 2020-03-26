@@ -61,11 +61,11 @@ void session_init(struct session *session, set_baudrate_fn set_baudrate,
     session_reset(session);
 }
 
-int session_add_byte(struct session *session, unsigned char data) {
+enum result session_add_byte(struct session *session, unsigned char data) {
     switch (session->state) {
         case INIT:
             // Ignore early noise
-            if (data == 0x00 || data == 0xFF) return 1;
+            if (data == 0x00 || data == 0xFF) return NOISE;
             session->state = ATR;
             // Fallthrough
         case ATR:
@@ -97,7 +97,7 @@ int session_add_byte(struct session *session, unsigned char data) {
                 session->state = T1_DATA;
                 return data_t1_analyze(&session->data, data);
             }
-            return 0;
+            return STATE_ERROR;
         case PPS:
             {
                 int end_pps = pps_analyze(&session->pps, data);
@@ -129,5 +129,5 @@ int session_add_byte(struct session *session, unsigned char data) {
                 return end_data;
             }
     }
-    return 0;
+    return STATE_ERROR;
 }

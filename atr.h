@@ -1,6 +1,8 @@
 #ifndef SCSNIFF_ATR_H
 #define SCSNIFF_ATR_H
 
+#include "result.h"
+
 enum atr_state {
     WAIT_T0 = 0,
     WAIT_TD,
@@ -18,7 +20,7 @@ struct atr {
 
 void atr_init(struct atr *atr);
 
-int atr_analyze(struct atr *atr, unsigned char data);
+enum result atr_analyze(struct atr *atr, unsigned char data);
 
 void atr_done(struct atr *atr, unsigned *new_proto);
 

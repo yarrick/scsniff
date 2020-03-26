@@ -1,6 +1,6 @@
 default: scsniff
 
-DEPS = atr.h session.h pps.h data.h
+DEPS = result.h atr.h session.h pps.h data.h
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $<

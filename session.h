@@ -1,6 +1,7 @@
 #ifndef SCSNIFF_SESSION_H
 #define SCSNIFF_SESSION_H
 
+#include "result.h"
 #include "atr.h"
 #include "data.h"
 #include "pps.h"
@@ -32,7 +33,6 @@ void session_init(struct session *session, set_baudrate_fn set_baudrate,
 
 void session_reset(struct session *session);
 
-// Returns nonzero if byte was last in packet
-int session_add_byte(struct session *session, unsigned char data);
+enum result session_add_byte(struct session *session, unsigned char data);
 
 #endif // SCSNIFF_SESSION_H

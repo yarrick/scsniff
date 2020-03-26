@@ -25,20 +25,20 @@ static int handle_t_bits(struct atr *atr, unsigned char data) {
         atr->state = WAIT_END;
     }
     if (atr->bytes_left == 0) {
-        // No T bytes or historical bytes
+        // No more T bytes or historical bytes
         atr->state = ATR_DONE;
-        return 1;
+        return PACKET_FROM_CARD;
     }
-    return 0;
+    return CONTINUE;
 }
 
-int atr_analyze(struct atr *atr, unsigned char data) {
+enum result atr_analyze(struct atr *atr, unsigned char data) {
     // Already done?
-    if (atr->state == ATR_DONE) return 1;
+    if (atr->state == ATR_DONE) return STATE_ERROR;
     atr->bytes_left--;
     // Waiting for more data?
     if (atr->bytes_left > 0) {
-        return 0;
+        return CONTINUE;
     }
     switch (atr->state) {
         case WAIT_T0:
@@ -59,7 +59,7 @@ int atr_analyze(struct atr *atr, unsigned char data) {
             }
         case WAIT_END:
             atr->state = ATR_DONE;
-            return 1;
+            return PACKET_FROM_CARD;
     }
 }
 

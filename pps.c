@@ -12,7 +12,7 @@ static int pps_msg_len(unsigned char pps0) {
     return 3 + __builtin_popcount(pps0 & 0xF0);
 }
 
-static int pps_parse(struct pps_msg *msg, unsigned char data) {
+static int pps_parse(struct pps_msg *msg, unsigned char data, enum result packet_direction) {
     msg->bytes_seen++;
     if (msg->bytes_seen == 2) {
         // PPS0
@@ -22,19 +22,19 @@ static int pps_parse(struct pps_msg *msg, unsigned char data) {
         // PPS1
         msg->pps1 = data;
     }
-    if (msg->bytes_seen == msg->msg_length) return 1;
-    return 0;
+    if (msg->bytes_seen == msg->msg_length) return packet_direction;
+    return CONTINUE;
 }
 
-int pps_analyze(struct pps *pps, unsigned char data) {
+enum result pps_analyze(struct pps *pps, unsigned char data) {
     if (pps->proposal.bytes_seen < 2 || pps->proposal.bytes_seen < pps->proposal.msg_length) {
-        return pps_parse(&pps->proposal, data);
+        return pps_parse(&pps->proposal, data, PACKET_TO_CARD);
     }
     if (pps->reply.bytes_seen < 2 || pps->reply.bytes_seen < pps->reply.msg_length) {
-        return pps_parse(&pps->reply, data);
+        return pps_parse(&pps->reply, data, PACKET_FROM_CARD);
     }
     // Out of bounds
-    return 1;
+    return STATE_ERROR;
 }
 
 int pps_done(struct pps *pps, unsigned *new_proto, unsigned *new_speed) {
