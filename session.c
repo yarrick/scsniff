@@ -37,10 +37,18 @@ static unsigned baud_divisor(unsigned char speed) {
 
 #define BASE_ETU (372)
 
+static void send_packet(struct session *session, enum result result) {
+    struct packet packet;
+    packet.data = session->buf;
+    packet.data_length = session->buf_index;
+    packet.result = result;
+    session->completed_packet(&packet);
+}
+
 void session_reset(struct session *session) {
     if (session->buf_index > 0) {
         // Incomplete packet in buffer, consider it noise
-        session->completed_packet(session->buf, session->buf_index, NOISE);
+        send_packet(session, NOISE);
         session->buf_index = 0;
     }
     memset(session->buf, 0, SESSION_BUFLEN);
@@ -119,7 +127,7 @@ void session_add_byte(struct session *session, unsigned char data) {
         res = session_analyze(session, data, &phase_complete);
     }
     if (res) {
-        session->completed_packet(session->buf, session->buf_index, res);
+        send_packet(session, res);
         memset(session->buf, 0, SESSION_BUFLEN);
         session->buf_index = 0;
         if (phase_complete) {

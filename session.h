@@ -17,9 +17,15 @@ enum session_state {
 
 #define SESSION_BUFLEN (512)
 
+struct packet {
+    unsigned char *data;
+    unsigned data_length;
+    enum result result;
+};
+
 typedef void (*set_baudrate_fn)(int fd, unsigned baudrate);
 
-typedef void (*completed_packet_fn)(unsigned char *data, unsigned len, enum result result);
+typedef void (*completed_packet_fn)(struct packet *packet);
 
 struct session {
     unsigned char buf[SESSION_BUFLEN];

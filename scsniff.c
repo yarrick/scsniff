@@ -32,9 +32,9 @@ static void usage(char *name) {
     exit(2);
 }
 
-static void handle_packet(unsigned char *data, unsigned len, enum result result) {
+static void handle_packet(struct packet *packet) {
     unsigned i;
-    switch (result) {
+    switch (packet->result) {
         case NOISE:             printf("NOISE??"); break;
         case PACKET_TO_CARD:    printf("CARD<<<"); break;
         case PACKET_FROM_CARD:  printf("CARD>>>"); break;
@@ -42,8 +42,8 @@ static void handle_packet(unsigned char *data, unsigned len, enum result result)
         default:                printf("ERROR!!"); break;
     }
     printf(" |");
-    for (i = 0; i < len; i++) {
-        printf(" %02X", data[i]);
+    for (i = 0; i < packet->data_length; i++) {
+        printf(" %02X", packet->data[i]);
     }
     printf("\n");
 }
