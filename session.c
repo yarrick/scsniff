@@ -42,6 +42,7 @@ static void send_packet(struct session *session, enum result result) {
     packet.data = session->buf;
     packet.data_length = session->buf_index;
     packet.result = result;
+    packet.time = session->buf_time;
     session->completed_packet(&packet);
 }
 
@@ -125,6 +126,10 @@ void session_add_byte(struct session *session, unsigned char data) {
     if (session->buf_index < SESSION_BUFLEN) {
         session->buf[session->buf_index++] = data;
         res = session_analyze(session, data, &phase_complete);
+    }
+    if (session->buf_index == 1) {
+        // Record time of first byte
+        gettimeofday(&session->buf_time, NULL);
     }
     if (res) {
         send_packet(session, res);

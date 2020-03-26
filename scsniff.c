@@ -6,6 +6,7 @@
 #include <asm/ioctls.h>
 #include <asm/termbits.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
 
 #include "result.h"
 #include "session.h"
@@ -20,11 +21,14 @@ static void setup_serial(int fd, unsigned speed) {
     ioctl(fd, TCSETS2, &tio);
 }
 
+static struct timeval reset_time;
+
 static void wait_reset(int fd) {
     fprintf(stderr, "== Waiting for reset..  ");
     fflush(stderr);
     ioctl(fd, TIOCMIWAIT, TIOCM_CAR);
     fprintf(stderr, "Done\n");
+    gettimeofday(&reset_time, NULL);
 }
 
 static void usage(char *name) {
@@ -33,7 +37,10 @@ static void usage(char *name) {
 }
 
 static void handle_packet(struct packet *packet) {
+    struct timeval diff;
     unsigned i;
+    timersub(&packet->time, &reset_time, &diff);
+    printf("+%ld.%06lds | ", diff.tv_sec, diff.tv_usec);
     switch (packet->result) {
         case NOISE:             printf("NOISE??"); break;
         case PACKET_TO_CARD:    printf("CARD<<<"); break;

@@ -1,6 +1,8 @@
 #ifndef SCSNIFF_SESSION_H
 #define SCSNIFF_SESSION_H
 
+#include <sys/time.h>
+
 #include "result.h"
 #include "atr.h"
 #include "data.h"
@@ -21,6 +23,7 @@ struct packet {
     unsigned char *data;
     unsigned data_length;
     enum result result;
+    struct timeval time;
 };
 
 typedef void (*set_baudrate_fn)(int fd, unsigned baudrate);
@@ -30,6 +33,7 @@ typedef void (*completed_packet_fn)(struct packet *packet);
 struct session {
     unsigned char buf[SESSION_BUFLEN];
     unsigned buf_index;
+    struct timeval buf_time;
     set_baudrate_fn set_baudrate;
     int serial_fd;
     unsigned base_baudrate;
