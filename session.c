@@ -69,7 +69,7 @@ void session_init(struct session *session, completed_packet_fn completed_packet,
     session_reset(session);
 }
 
-static enum result session_analyze(struct session *session, unsigned char data) {
+static enum result session_analyze(struct session *session, unsigned char data, unsigned *complete) {
     switch (session->state) {
         case INIT:
             // Ignore early noise
@@ -77,18 +77,12 @@ static enum result session_analyze(struct session *session, unsigned char data) 
             session->state = ATR;
             // Fallthrough
         case ATR:
-            {
-                int end_atr = atr_analyze(&session->atr, data);
-                if (end_atr) {
-                    session->have_update = 1;
-                }
-                return end_atr;
-            }
+            return atr_analyze(&session->atr, data, complete);
         case IDLE:
-            if (data == 0xFF && pps_done(&session->pps, NULL, NULL) == 0) {
+            if (data == 0xFF) {
                 // PPS start byte
                 session->state = PPS;
-                return pps_analyze(&session->pps, data);
+                return pps_analyze(&session->pps, data, complete);
             }
             if (session->protocol_version == 0) {
                 session->state = T0_DATA;
@@ -100,13 +94,7 @@ static enum result session_analyze(struct session *session, unsigned char data) 
             }
             return STATE_ERROR;
         case PPS:
-            {
-                int end_pps = pps_analyze(&session->pps, data);
-                if (end_pps == PACKET_FROM_CARD) {
-                    session->have_update = 1;
-                }
-                return end_pps;
-            }
+            return pps_analyze(&session->pps, data, complete);
         case T0_DATA:
             {
                 int end_data = data_t0_analyze(&session->data, data);
@@ -125,23 +113,24 @@ static enum result session_analyze(struct session *session, unsigned char data) 
 
 void session_add_byte(struct session *session, unsigned char data) {
     enum result res = STATE_ERROR;
+    unsigned phase_complete = 0;
     if (session->buf_index < SESSION_BUFLEN) {
         session->buf[session->buf_index++] = data;
-        res = session_analyze(session, data);
+        res = session_analyze(session, data, &phase_complete);
     }
     if (res) {
         session->completed_packet(session->buf, session->buf_index, res);
         memset(session->buf, 0, SESSION_BUFLEN);
         session->buf_index = 0;
-        if (session->have_update) {
+        if (phase_complete) {
             unsigned proto = 0xFF;
             unsigned speed = 0xFF;
             char *phase = "?";
             if (session->state == ATR) {
-                atr_done(&session->atr, &proto);
+                atr_result(&session->atr, &proto);
                 phase = "ATR";
             } else if (session->state == PPS) {
-                pps_done(&session->pps, &proto, &speed);
+                pps_result(&session->pps, &proto, &speed);
                 phase = "PPS";
             }
             if (proto != 0xFF && proto != session->protocol_version) {
@@ -152,7 +141,6 @@ void session_add_byte(struct session *session, unsigned char data) {
             if (speed != 0xFF) {
                 update_speed(session, speed, phase);
             }
-            session->have_update = 0;
             session->state = IDLE;
         }
     }

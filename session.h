@@ -32,7 +32,6 @@ struct session {
     struct atr atr;
     struct pps pps;
     struct data data;
-    unsigned have_update;
     unsigned protocol_version;
 };
 

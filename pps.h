@@ -17,8 +17,8 @@ struct pps {
 
 void pps_init(struct pps *pps);
 
-enum result pps_analyze(struct pps *pps, unsigned char data);
+enum result pps_analyze(struct pps *pps, unsigned char data, unsigned *complete);
 
-int pps_done(struct pps *pps, unsigned *new_proto, unsigned *new_speed);
+void pps_result(struct pps *pps, unsigned *new_proto, unsigned *new_speed);
 
 #endif // SCSNIFF_PPS_H

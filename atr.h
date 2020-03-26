@@ -20,9 +20,9 @@ struct atr {
 
 void atr_init(struct atr *atr);
 
-enum result atr_analyze(struct atr *atr, unsigned char data);
+enum result atr_analyze(struct atr *atr, unsigned char data, unsigned *complete);
 
-void atr_done(struct atr *atr, unsigned *new_proto);
+void atr_result(struct atr *atr, unsigned *new_proto);
 
 void atr_print_state(struct atr *atr);
 
