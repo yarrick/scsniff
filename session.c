@@ -38,6 +38,12 @@ static unsigned baud_divisor(unsigned char speed) {
 #define BASE_ETU (372)
 
 void session_reset(struct session *session) {
+    if (session->buf_index > 0) {
+        // Incomplete packet in buffer, consider it noise
+        session->completed_packet(session->buf, session->buf_index, NOISE);
+        session->buf_index = 0;
+    }
+    memset(session->buf, 0, SESSION_BUFLEN);
     session->state = INIT;
     atr_init(&session->atr);
     pps_init(&session->pps);
@@ -48,20 +54,21 @@ void session_reset(struct session *session) {
 static void update_speed(struct session *session, unsigned speed) {
     unsigned new_etu = clock_conversion(speed) / baud_divisor(speed);
     unsigned baudrate = session->base_baudrate * BASE_ETU / ((float) new_etu);
-    fprintf(stderr,"\n== Switching session to %d ETU => %d baud\n", new_etu, baudrate);
+    fprintf(stderr,"== Switching to %d ticks per ETU (%d baud)\n", new_etu, baudrate);
     session->set_baudrate(session->serial_fd, baudrate);
 }
 
-void session_init(struct session *session, set_baudrate_fn set_baudrate,
-                  int fd, unsigned baudrate) {
+void session_init(struct session *session, completed_packet_fn completed_packet,
+                  set_baudrate_fn set_baudrate, int fd, unsigned baudrate) {
     memset(session, 0, sizeof(struct session));
     session->set_baudrate = set_baudrate;
     session->serial_fd = fd;
     session->base_baudrate = baudrate;
+    session->completed_packet = completed_packet;
     session_reset(session);
 }
 
-enum result session_add_byte(struct session *session, unsigned char data) {
+static enum result session_analyze(struct session *session, unsigned char data) {
     switch (session->state) {
         case INIT:
             // Ignore early noise
@@ -72,14 +79,7 @@ enum result session_add_byte(struct session *session, unsigned char data) {
             {
                 int end_atr = atr_analyze(&session->atr, data);
                 if (end_atr) {
-                    unsigned proto = 0xFF;
-                    atr_done(&session->atr, &proto);
-                    if (proto != 0xFF && proto != session->protocol_version) {
-                        session->protocol_version = proto;
-                        fprintf(stderr, "\n== Card requested protocol T=%d in ATR",
-                                session->protocol_version);
-                    }
-                    session->state = IDLE;
+                    session->have_update = 1;
                 }
                 return end_atr;
             }
@@ -101,18 +101,8 @@ enum result session_add_byte(struct session *session, unsigned char data) {
         case PPS:
             {
                 int end_pps = pps_analyze(&session->pps, data);
-                if (end_pps) {
-                    unsigned proto = 0;
-                    unsigned speed = 0xFF;
-                    if (pps_done(&session->pps, &proto, &speed)) {
-                        session->state = IDLE;
-                        session->protocol_version = proto;
-                        fprintf(stderr, "\n== PPS completed, now using protocol T=%d",
-                                session->protocol_version);
-                        if (speed != 0xFF) {
-                            update_speed(session, speed);
-                        }
-                    }
+                if (end_pps == PACKET_FROM_CARD) {
+                    session->have_update = 1;
                 }
                 return end_pps;
             }
@@ -130,4 +120,39 @@ enum result session_add_byte(struct session *session, unsigned char data) {
             }
     }
     return STATE_ERROR;
+}
+
+void session_add_byte(struct session *session, unsigned char data) {
+    enum result res = STATE_ERROR;
+    if (session->buf_index < SESSION_BUFLEN) {
+        session->buf[session->buf_index++] = data;
+        res = session_analyze(session, data);
+    }
+    if (res) {
+        session->completed_packet(session->buf, session->buf_index, res);
+        memset(session->buf, 0, SESSION_BUFLEN);
+        session->buf_index = 0;
+        if (session->have_update) {
+            unsigned proto = 0xFF;
+            unsigned speed = 0xFF;
+            if (session->state == ATR) {
+                atr_done(&session->atr, &proto);
+            } else if (session->state == PPS) {
+                if (pps_done(&session->pps, &proto, &speed)) {
+                    session->protocol_version = proto;
+                    fprintf(stderr, "== PPS completed\n");
+                }
+            }
+            if (proto != 0xFF && proto != session->protocol_version) {
+                session->protocol_version = proto;
+                fprintf(stderr, "== Switching to protocol T=%d\n",
+                        session->protocol_version);
+            }
+            if (speed != 0xFF) {
+                update_speed(session, speed);
+            }
+            session->have_update = 0;
+            session->state = IDLE;
+        }
+    }
 }

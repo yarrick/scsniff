@@ -15,24 +15,32 @@ enum session_state {
     T1_DATA,
 };
 
+#define SESSION_BUFLEN (512)
+
 typedef void (*set_baudrate_fn)(int fd, unsigned baudrate);
 
+typedef void (*completed_packet_fn)(unsigned char *data, unsigned len, enum result result);
+
 struct session {
+    unsigned char buf[SESSION_BUFLEN];
+    unsigned buf_index;
     set_baudrate_fn set_baudrate;
     int serial_fd;
     unsigned base_baudrate;
+    completed_packet_fn completed_packet;
     enum session_state state;
     struct atr atr;
     struct pps pps;
     struct data data;
+    unsigned have_update;
     unsigned protocol_version;
 };
 
-void session_init(struct session *session, set_baudrate_fn set_baudrate,
-                  int fd, unsigned baudrate);
+void session_init(struct session *session, completed_packet_fn completed_packet,
+                  set_baudrate_fn set_baudrate, int fd, unsigned baudrate);
 
 void session_reset(struct session *session);
 
-enum result session_add_byte(struct session *session, unsigned char data);
+void session_add_byte(struct session *session, unsigned char data);
 
 #endif // SCSNIFF_SESSION_H

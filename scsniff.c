@@ -20,8 +20,7 @@ static void setup_serial(int fd, unsigned speed) {
     ioctl(fd, TCSETS2, &tio);
 }
 
-static void reset(int fd, struct session *session) {
-    session_reset(session);
+static void wait_reset(int fd) {
     fprintf(stderr, "Waiting for reset..  ");
     fflush(stderr);
     ioctl(fd, TIOCMIWAIT, TIOCM_CAR);
@@ -31,6 +30,22 @@ static void reset(int fd, struct session *session) {
 static void usage(char *name) {
     fprintf(stderr, "\nUsage: %s <device> [<baudrate>]\n", name);
     exit(2);
+}
+
+static void handle_packet(unsigned char *data, unsigned len, enum result result) {
+    unsigned i;
+    switch (result) {
+        case NOISE:             printf("NOISE??"); break;
+        case PACKET_TO_CARD:    printf("CARD<<<"); break;
+        case PACKET_FROM_CARD:  printf("CARD>>>"); break;
+        case PACKET_UNKNOWN:    printf("CARD???"); break;
+        default:                printf("ERROR!!"); break;
+    }
+    printf(" |");
+    for (i = 0; i < len; i++) {
+        printf(" %02X", data[i]);
+    }
+    printf("\n");
 }
 
 void main(int argc, char **argv) {
@@ -53,31 +68,20 @@ void main(int argc, char **argv) {
     fprintf(stderr, "Opened %s at %d\n", argv[1], baudrate);
 
     struct session session;
-    session_init(&session, setup_serial, fd, baudrate);
+    session_init(&session, handle_packet, setup_serial, fd, baudrate);
 
     while (1) {
-        reset(fd, &session);
+        wait_reset(fd);
         int loops = 0;
         while (1) {
             unsigned char c;
             if (read(fd, &c, 1) >0) {
-                printf("%02X ", c);
-                fflush(0);
                 loops = 0;
-                enum result res = session_add_byte(&session, c);
-                if (res) {
-                    switch (res) {
-                        case NOISE: printf("(noise)"); break;
-                        case PACKET_TO_CARD: printf("(card<<)"); break;
-                        case PACKET_FROM_CARD: printf("(card>>)"); break;
-                        case PACKET_UNKNOWN: printf("(card\?\?)"); break;
-                        case STATE_ERROR: printf("(parse error)"); break;
-                    }
-                    printf("\n");
-                }
+                session_add_byte(&session, c);
             }
             loops++;
             if (loops > 3000000) {
+                session_reset(&session);
                 printf("\n\n");
                 fprintf(stderr, "Timeout!\n");
                 break;
