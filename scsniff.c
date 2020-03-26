@@ -7,6 +7,7 @@
 #include <asm/termbits.h>
 #include <sys/ioctl.h>
 
+#include "result.h"
 #include "session.h"
 
 static void setup_serial(int fd, unsigned speed) {
@@ -63,7 +64,15 @@ void main(int argc, char **argv) {
                 printf("%02X ", c);
                 fflush(0);
                 loops = 0;
-                if (session_add_byte(&session, c)) {
+                enum result res = session_add_byte(&session, c);
+                if (res) {
+                    switch (res) {
+                        case NOISE: printf("(noise)"); break;
+                        case PACKET_TO_CARD: printf("(card<<)"); break;
+                        case PACKET_FROM_CARD: printf("(card>>)"); break;
+                        case PACKET_UNKNOWN: printf("(card\?\?)"); break;
+                        case STATE_ERROR: printf("(parse error)"); break;
+                    }
                     printf("\n");
                 }
             }
