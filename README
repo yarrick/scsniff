@@ -17,6 +17,11 @@ Features:
 - Expects new reset being sent after a few seconds of no communication.
 
 
+How to build:
+
+Run `make`.
+
+
 How to use:
 
 You need a data logger which captures the smartcard communication and converts
@@ -27,13 +32,14 @@ manpage for details.
 
 You need to know the starting baud rate being used. This depends on the clock
 frequency used by the reader. If you can measure it while the reader is active,
-the baudrate should be the frequency divided by 372.
+the baudrate should be the frequency divided by 372. Nonstandard baudrates are
+common, so your port (or USB adapter) needs to handle custom baudrates.
 
-If you know what a specific card sends as ATR (Answer to reset) you can use
-that to test different baud rates until scsniff can get the same data. It is
-normally around 9600 baud - try going up or down by increments of 500 until
-you get the same result. In my testing I use 10500 for the reader in my
-laptop and 5600 for a bank authentication device.
+If you know what a specific card sends as ATR (Answer to reset, shown by
+pcsc_scan tool) you can test different baud rates until scsniff can see the
+same reply. It is normally around 9600 baud - try going up or down by
+increments of 500 until you get the same result. In my testing I use 10500 for
+the reader in my laptop and 5600 for a bank authentication device.
 
 Once you have found the correct baudrate scsniff will output any communication
 between the reader and the card. It will show the direction of the traffic when
