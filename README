@@ -59,7 +59,7 @@ Not yet supported:
 
 - Detecting in ATR if CRC 16 error checking is enabled for T=1 protocol.
 
-- Detecting card powerdown signal from reset pin.
+- Detecting card powerdown signal from reset pin (or reset before timeout).
 
 - Inferring data transfer direction for T=0 based on command (INS).
 
