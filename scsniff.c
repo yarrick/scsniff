@@ -55,7 +55,7 @@ static void handle_packet(struct packet *packet) {
     printf("\n");
 }
 
-void main(int argc, char **argv) {
+int main(int argc, char **argv) {
     if (argc < 2) usage(argv[0]);
     int fd = open(argv[1], O_RDONLY | O_NOCTTY | O_NDELAY);
     if(fd < 0) {
@@ -94,4 +94,5 @@ void main(int argc, char **argv) {
             }
         }
     }
+    return 0;
 }

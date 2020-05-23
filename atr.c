@@ -61,6 +61,8 @@ enum result atr_analyze(struct atr *atr, unsigned char data, unsigned *complete)
             atr->state = ATR_DONE;
             if (complete) *complete = 1;
             return PACKET_FROM_CARD;
+        default:
+            return STATE_ERROR;
     }
 }
 
