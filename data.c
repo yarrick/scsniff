@@ -11,6 +11,7 @@ static enum result data_t0_transfer_direction(struct data *data) {
     switch (data->t0_ins) {
         // First data transfer (if any) will be to the card.
         // Any return data will be read with GET RESPONSE.
+        case 0x04: // DEACTIVATE FILE
         case 0x0E: case 0x0F: // ERASE BINARY
         case 0x20: case 0x21: // VERIFY
         case 0x22: // MANAGE SECURITY ENVIRONMENT/KEY DERIVATION
@@ -18,6 +19,7 @@ static enum result data_t0_transfer_direction(struct data *data) {
         case 0x26: // DISABLE VERIFICATION REQUIREMENT
         case 0x28: // ENABLE VERIFICATION REQUIREMENT
         case 0x2C: // RESET RETRY COUNTER
+        case 0x44: // ACTIVATE FILE
         case 0x82: // EXTERNAL or MUTUAL AUTHENTICATE
         case 0x86: case 0x87: // GENERAL AUTHENTICATE
         case 0x88: // INTERNAL AUTHENTICATE
