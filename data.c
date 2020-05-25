@@ -8,9 +8,9 @@ void data_init(struct data *data) {
 }
 
 static enum result data_transfer_direction(struct data *data) {
-    // Commands where data is always only sent in one direction,
-    // from ISO 7816-4.
     switch (data->t0_ins) {
+        // First data packet (if any) will be to the card.
+        // Any return data will be read with GET RESPONSE.
         case 0x0E: case 0x0F: // ERASE BINARY
         case 0x20: case 0x21: // VERIFY
         case 0x22: // MANAGE SECURITY ENVIRONMENT/KEY DERIVATION
@@ -18,7 +18,15 @@ static enum result data_transfer_direction(struct data *data) {
         case 0x26: // DISABLE VERIFICATION REQUIREMENT
         case 0x28: // ENABLE VERIFICATION REQUIREMENT
         case 0x2C: // RESET RETRY COUNTER
-        case 0x82: // EXTERNAL AUTHENTICATE
+        case 0x82: // EXTERNAL or MUTUAL AUTHENTICATE
+        case 0x86: case 0x87: // GENERAL AUTHENTICATE
+        case 0x88: // INTERNAL AUTHENTICATE
+        case 0xA1: // SEARCH BINARY
+        case 0xA2: // SEARCH RECORD
+        case 0xB1: // READ BINARY
+        case 0xB3: // READ RECORD
+        case 0xC2: case 0xC3: // ENVELOPE
+        case 0xCB: // GET DATA
         case 0xD0: case 0xD1: // WRITE BINARY
         case 0xD2: // WRITE RECORD
         case 0xD6: case 0xD7: // UPDATE BINARY
@@ -27,6 +35,7 @@ static enum result data_transfer_direction(struct data *data) {
         case 0xE2: // APPEND RECORD
             return PACKET_TO_CARD;
 
+        // First data packet (if any) will be from the card.
         case 0x70: // MANAGE CHANNEL
         case 0x84: // GET CHALLENGE
         case 0xB0: // READ BINARY
