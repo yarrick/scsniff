@@ -32,6 +32,8 @@ static enum result data_t0_transfer_direction(struct data *data) {
         case 0xD6: case 0xD7: // UPDATE BINARY
         case 0xDA: case 0xDB: // PUT DATA
         case 0xDC: case 0xDD: // UPDATE RECORD
+        case 0xE0: // CREATE FILE
+        case 0xE4: // DELETE FILE
         case 0xE2: // APPEND RECORD
             return PACKET_TO_CARD;
 
