@@ -16,7 +16,7 @@ Features:
 
 - Expects new reset being sent after a few seconds of no communication.
 
-- Identifies transfer direction for T=0 payloads where it is always known.
+- Identifies transfer direction for most T=0 data fields.
 
 
 How to build:
@@ -63,7 +63,7 @@ Not yet supported:
 
 - Detecting card powerdown signal from reset pin (or reset before timeout).
 
-- Inferring data transfer direction for T=0 based on command parameters.
+- Fully inferring data transfer direction for T=0 based on command parameters.
 
 
 Sample session:

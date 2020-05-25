@@ -7,9 +7,9 @@ void data_init(struct data *data) {
     data->t1_check_len = LRC_XOR;
 }
 
-static enum result data_transfer_direction(struct data *data) {
+static enum result data_t0_transfer_direction(struct data *data) {
     switch (data->t0_ins) {
-        // First data packet (if any) will be to the card.
+        // First data transfer (if any) will be to the card.
         // Any return data will be read with GET RESPONSE.
         case 0x0E: case 0x0F: // ERASE BINARY
         case 0x20: case 0x21: // VERIFY
@@ -35,7 +35,7 @@ static enum result data_transfer_direction(struct data *data) {
         case 0xE2: // APPEND RECORD
             return PACKET_TO_CARD;
 
-        // First data packet (if any) will be from the card.
+        // First data transfer (if any) will be from the card.
         case 0x70: // MANAGE CHANNEL
         case 0x84: // GET CHALLENGE
         case 0xB0: // READ BINARY
@@ -74,10 +74,12 @@ enum result data_t0_analyze(struct data *data, unsigned char byte) {
             } else if (data->t0_command_bytes_seen == 4) {
                 data->t0_p2 = byte;
             } else if (data->t0_command_bytes_seen == 5) {
-                // 0x00 means 0x100 for transfers from the card,
-                // but 0x00 for transfers to the card.
-                // Transfer direction is not known here.
                 data->t0_p3_len = byte;
+                if (data_t0_transfer_direction(data) == PACKET_FROM_CARD) {
+                    // This is response length so 0 means 256.
+                    // Note that this direction check has false negatives.
+                    if (byte == 0x00) data->t0_p3_len = 256;
+                }
                 data->t0_state = PROCEDURE_BYTE;
                 return PACKET_TO_CARD;
             }
@@ -88,7 +90,10 @@ enum result data_t0_analyze(struct data *data, unsigned char byte) {
                 data->t0_state = SW2;
             }
             if (byte == data->t0_ins) {
-                data->t0_state = TRANSFER_ALL;
+                // Expect the remaining bytes, if any
+                if (data->t0_transfer_bytes_seen < data->t0_p3_len) {
+                    data->t0_state = TRANSFER_ALL;
+                }
                 return PACKET_FROM_CARD;
             }
             if ((byte ^ 0xFF) == data->t0_ins) {
@@ -109,13 +114,13 @@ enum result data_t0_analyze(struct data *data, unsigned char byte) {
             data->t0_transfer_bytes_seen++;
             if (data->t0_p3_len == data->t0_transfer_bytes_seen) {
                 data->t0_state = PROCEDURE_BYTE;
-                return data_transfer_direction(data);
+                return data_t0_transfer_direction(data);
             }
             break;
         case TRANSFER_ONE:
             data->t0_transfer_bytes_seen++;
             data->t0_state = PROCEDURE_BYTE;
-            return data_transfer_direction(data);
+            return data_t0_transfer_direction(data);
     }
     return CONTINUE;
 }
