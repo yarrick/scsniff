@@ -7,6 +7,37 @@ void data_init(struct data *data) {
     data->t1_check_len = LRC_XOR;
 }
 
+static enum result data_transfer_direction(struct data *data) {
+    // Commands where data is always only sent in one direction,
+    // from ISO 7816-4.
+    switch (data->t0_ins) {
+        case 0x0E: case 0x0F: // ERASE BINARY
+        case 0x20: case 0x21: // VERIFY
+        case 0x22: // MANAGE SECURITY ENVIRONMENT/KEY DERIVATION
+        case 0x24: // CHANGE REFERENCE DATA
+        case 0x26: // DISABLE VERIFICATION REQUIREMENT
+        case 0x28: // ENABLE VERIFICATION REQUIREMENT
+        case 0x2C: // RESET RETRY COUNTER
+        case 0x82: // EXTERNAL AUTHENTICATE
+        case 0xD0: case 0xD1: // WRITE BINARY
+        case 0xD2: // WRITE RECORD
+        case 0xD6: case 0xD7: // UPDATE BINARY
+        case 0xDA: case 0xDB: // PUT DATA
+        case 0xDC: case 0xDD: // UPDATE RECORD
+        case 0xE2: // APPEND RECORD
+            return PACKET_TO_CARD;
+
+        case 0x70: // MANAGE CHANNEL
+        case 0x84: // GET CHALLENGE
+        case 0xB0: // READ BINARY
+        case 0xB2: // READ RECORD
+        case 0xC0: // GET RESPONSE
+        case 0xCA: // GET DATA
+            return PACKET_FROM_CARD;
+    }
+    return PACKET_UNKNOWN;
+}
+
 enum result data_t0_analyze(struct data *data, unsigned char byte) {
     switch (data->t0_state) {
         case COMMAND:
@@ -49,13 +80,13 @@ enum result data_t0_analyze(struct data *data, unsigned char byte) {
             data->t0_transfer_bytes_seen++;
             if (data->t0_p3_len == data->t0_transfer_bytes_seen) {
                 data->t0_state = PROCEDURE_BYTE;
-                return PACKET_UNKNOWN;
+                return data_transfer_direction(data);
             }
             break;
         case TRANSFER_ONE:
             data->t0_transfer_bytes_seen++;
             data->t0_state = PROCEDURE_BYTE;
-            return PACKET_UNKNOWN;
+            return data_transfer_direction(data);
     }
     return CONTINUE;
 }

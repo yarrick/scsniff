@@ -16,6 +16,8 @@ Features:
 
 - Expects new reset being sent after a few seconds of no communication.
 
+- Identifies transfer direction for T=0 payloads where it is always known.
+
 
 How to build:
 
@@ -61,7 +63,7 @@ Not yet supported:
 
 - Detecting card powerdown signal from reset pin (or reset before timeout).
 
-- Inferring data transfer direction for T=0 based on command (INS).
+- Inferring data transfer direction for T=0 based on command parameters.
 
 
 Sample session:
@@ -78,7 +80,7 @@ $ ./scsniff /dev/ttyUSB0 5600
 +0.109960s | CARD>>> | 6C 16
 +0.111310s | CARD<<< | 00 CA 01 00 16
 +0.115236s | CARD>>> | CA
-+0.115794s | CARD<?> | 43 6F 6D 62 4F 53 20 55 42 53 20 41 63 63 65 73 73 20 43 61 72 64
++0.115794s | CARD>>> | 43 6F 6D 62 4F 53 20 55 42 53 20 41 63 63 65 73 73 20 43 61 72 64
 +0.128261s | CARD>>> | 90 00
 ^C
 
