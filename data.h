@@ -22,6 +22,8 @@ struct data {
     enum data_t0_state t0_state;
     unsigned t0_command_bytes_seen;
     unsigned t0_ins;
+    unsigned t0_p1;
+    unsigned t0_p2;
     unsigned t0_p3_len;
     unsigned t0_transfer_bytes_seen;
 

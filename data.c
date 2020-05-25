@@ -34,6 +34,22 @@ static enum result data_transfer_direction(struct data *data) {
         case 0xC0: // GET RESPONSE
         case 0xCA: // GET DATA
             return PACKET_FROM_CARD;
+
+        case 0xA4: // SELECT
+            // ISO 7816-4 Table 39: P1 meaning for SELECT command.
+            switch (data->t0_p1) {
+                case 0x01: // Select child DF (data = DF identifier)
+                case 0x02: // Select EF under current DF (data = EF identifier)
+                case 0x04: // Select by DF name (data = app identifier)
+                case 0x08: // Select from the MF (data = Path without MF id)
+                case 0x09: // Select from the current DF
+                           // (data = path without the current DF identifier)
+                    return PACKET_TO_CARD;
+
+                case 0x03: // Select parent DF of the current DF (data absent)
+                    return PACKET_FROM_CARD;
+            }
+            break;
     }
     return PACKET_UNKNOWN;
 }
@@ -44,6 +60,10 @@ enum result data_t0_analyze(struct data *data, unsigned char byte) {
             data->t0_command_bytes_seen++;
             if (data->t0_command_bytes_seen == 2) {
                 data->t0_ins = byte;
+            } else if (data->t0_command_bytes_seen == 3) {
+                data->t0_p1 = byte;
+            } else if (data->t0_command_bytes_seen == 4) {
+                data->t0_p2 = byte;
             } else if (data->t0_command_bytes_seen == 5) {
                 // 0x00 means 0x100 for transfers from the card,
                 // but 0x00 for transfers to the card.
