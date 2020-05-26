@@ -4,11 +4,11 @@
 
 void data_init(struct data *data) {
     memset(data, 0, sizeof(struct data));
-    data->t1_check_len = LRC_XOR;
+    data->t1.check_len = LRC_XOR;
 }
 
-static enum result data_t0_transfer_direction(struct data *data) {
-    switch (data->t0_ins) {
+static enum result t0_transfer_direction(struct data_t0 *data) {
+    switch (data->ins) {
         // First data transfer (if any) will be to the card.
         // Any return data will be read with GET RESPONSE.
         case 0x04: // DEACTIVATE FILE
@@ -50,7 +50,7 @@ static enum result data_t0_transfer_direction(struct data *data) {
 
         case 0xA4: // SELECT
             // ISO 7816-4 Table 39: P1 meaning for SELECT command.
-            switch (data->t0_p1) {
+            switch (data->p1) {
                 case 0x01: // Select child DF (data = DF identifier)
                 case 0x02: // Select EF under current DF (data = EF identifier)
                 case 0x04: // Select by DF name (data = app identifier)
@@ -68,63 +68,62 @@ static enum result data_t0_transfer_direction(struct data *data) {
 }
 
 enum result data_t0_analyze(struct data *data, unsigned char byte) {
-    switch (data->t0_state) {
+    struct data_t0 *t0 = &data->t0;
+    switch (t0->state) {
         case COMMAND:
-            data->t0_command_bytes_seen++;
-            if (data->t0_command_bytes_seen == 2) {
-                data->t0_ins = byte;
-            } else if (data->t0_command_bytes_seen == 3) {
-                data->t0_p1 = byte;
-            } else if (data->t0_command_bytes_seen == 4) {
-                data->t0_p2 = byte;
-            } else if (data->t0_command_bytes_seen == 5) {
-                data->t0_p3_len = byte;
-                if (data_t0_transfer_direction(data) == PACKET_FROM_CARD) {
+            t0->command_bytes_seen++;
+            if (t0->command_bytes_seen == 2) {
+                t0->ins = byte;
+            } else if (t0->command_bytes_seen == 3) {
+                t0->p1 = byte;
+            } else if (t0->command_bytes_seen == 5) {
+                t0->p3_len = byte;
+                if (t0_transfer_direction(t0) == PACKET_FROM_CARD) {
                     // This is response length so 0 means 256.
                     // Note that this direction check has false negatives.
-                    if (byte == 0x00) data->t0_p3_len = 256;
+                    if (byte == 0x00) t0->p3_len = 256;
                 }
-                data->t0_state = PROCEDURE_BYTE;
+                t0->state = PROCEDURE_BYTE;
                 return PACKET_TO_CARD;
             }
             break;
         case PROCEDURE_BYTE:
             if (byte == 0x60) return PACKET_FROM_CARD;
             if ((byte & 0xF0) == 0x60 || (byte & 0xF0) == 0x90) {
-                data->t0_state = SW2;
+                t0->state = SW2;
             }
-            if (byte == data->t0_ins) {
+            if (byte == t0->ins) {
                 // Expect the remaining bytes, if any
-                if (data->t0_transfer_bytes_seen < data->t0_p3_len) {
-                    data->t0_state = TRANSFER_ALL;
+                if (t0->transfer_bytes_seen < t0->p3_len) {
+                    t0->state = TRANSFER_ALL;
                 }
                 return PACKET_FROM_CARD;
             }
-            if ((byte ^ 0xFF) == data->t0_ins) {
+            if ((byte ^ 0xFF) == t0->ins) {
                 // Expect a single byte if not all sent already
-                if (data->t0_transfer_bytes_seen < data->t0_p3_len) {
-                    data->t0_state = TRANSFER_ONE;
+                if (t0->transfer_bytes_seen < t0->p3_len) {
+                    t0->state = TRANSFER_ONE;
                 }
                 return PACKET_FROM_CARD;
             }
             break;
         case SW2:
             // Completion of whole exchange.
-            data->t0_state = COMMAND;
-            data->t0_command_bytes_seen = 0;
-            data->t0_transfer_bytes_seen = 0;
+            t0->state = COMMAND;
+            t0->command_bytes_seen = 0;
+            t0->transfer_bytes_seen = 0;
             return PACKET_FROM_CARD;
         case TRANSFER_ALL:
-            data->t0_transfer_bytes_seen++;
-            if (data->t0_p3_len == data->t0_transfer_bytes_seen) {
-                data->t0_state = PROCEDURE_BYTE;
-                return data_t0_transfer_direction(data);
+            t0->transfer_bytes_seen++;
+            if (t0->p3_len == t0->transfer_bytes_seen) {
+                t0->state = PROCEDURE_BYTE;
+                return t0_transfer_direction(t0);
             }
             break;
         case TRANSFER_ONE:
-            data->t0_transfer_bytes_seen++;
-            data->t0_state = PROCEDURE_BYTE;
-            return data_t0_transfer_direction(data);
+            t0->transfer_bytes_seen++;
+            t0->state = PROCEDURE_BYTE;
+            return t0_transfer_direction(t0);
     }
     return CONTINUE;
 }
@@ -132,19 +131,20 @@ enum result data_t0_analyze(struct data *data, unsigned char byte) {
 #define T1_PROLOGUE_LEN (3)
 
 enum result data_t1_analyze(struct data *data, unsigned char byte) {
-    data->t1_bytes_seen++;
-    if (data->t1_bytes_seen == T1_PROLOGUE_LEN) {
-        data->t1_msg_length = T1_PROLOGUE_LEN + byte + data->t1_check_len;
+    struct data_t1 *t1 = &data->t1;
+    t1->bytes_seen++;
+    if (t1->bytes_seen == T1_PROLOGUE_LEN) {
+        t1->msg_length = T1_PROLOGUE_LEN + byte + t1->check_len;
         return CONTINUE;
     }
-    if (data->t1_msg_length && data->t1_bytes_seen == data->t1_msg_length) {
+    if (t1->msg_length && t1->bytes_seen == t1->msg_length) {
         // End of block, reset counters for next block
         enum result res = PACKET_TO_CARD;
-        if (data->t1_direction_from_card) res = PACKET_FROM_CARD;
-        data->t1_bytes_seen = 0;
-        data->t1_msg_length = 0;
+        if (t1->direction_from_card) res = PACKET_FROM_CARD;
+        t1->bytes_seen = 0;
+        t1->msg_length = 0;
         // Flip direction for next packet
-        data->t1_direction_from_card ^= 1;
+        t1->direction_from_card ^= 1;
         return res;
     }
     return CONTINUE;

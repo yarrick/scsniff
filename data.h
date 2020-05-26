@@ -18,19 +18,25 @@ enum data_t1_error_checking {
     CRC_16 = 2,
 };
 
-struct data {
-    enum data_t0_state t0_state;
-    unsigned t0_command_bytes_seen;
-    unsigned t0_ins;
-    unsigned t0_p1;
-    unsigned t0_p2;
-    unsigned t0_p3_len;
-    unsigned t0_transfer_bytes_seen;
+struct data_t0 {
+    enum data_t0_state state;
+    unsigned command_bytes_seen;
+    unsigned ins;
+    unsigned p1;
+    unsigned p3_len;
+    unsigned transfer_bytes_seen;
+};
 
-    unsigned t1_bytes_seen;
-    unsigned t1_msg_length;
-    unsigned t1_check_len;
-    unsigned t1_direction_from_card;
+struct data_t1 {
+    unsigned bytes_seen;
+    unsigned msg_length;
+    unsigned check_len;
+    unsigned direction_from_card;
+};
+
+struct data {
+    struct data_t0 t0;
+    struct data_t1 t1;
 };
 
 void data_init(struct data *data);
