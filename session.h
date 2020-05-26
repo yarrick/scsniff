@@ -30,19 +30,24 @@ typedef void (*set_baudrate_fn)(int fd, unsigned baudrate);
 
 typedef void (*completed_packet_fn)(struct packet *packet);
 
-struct session {
+// Per-session fields, to be reset when card is.
+struct current_session {
     unsigned char buf[SESSION_BUFLEN];
     unsigned buf_index;
+    enum session_state state;
     struct timeval buf_time;
+    unsigned protocol_version;
+    struct atr atr;
+    struct pps pps;
+    struct data data;
+};
+
+struct session {
     set_baudrate_fn set_baudrate;
     int serial_fd;
     unsigned base_baudrate;
     completed_packet_fn completed_packet;
-    enum session_state state;
-    struct atr atr;
-    struct pps pps;
-    struct data data;
-    unsigned protocol_version;
+    struct current_session curr;
 };
 
 void session_init(struct session *session, completed_packet_fn completed_packet,

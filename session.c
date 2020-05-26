@@ -38,25 +38,26 @@ static unsigned baud_divisor(unsigned char speed) {
 #define BASE_ETU (372)
 
 static void send_packet(struct session *session, enum result result) {
+    struct current_session *curr = &session->curr;
     struct packet packet;
-    packet.data = session->buf;
-    packet.data_length = session->buf_index;
+    packet.data = curr->buf;
+    packet.data_length = curr->buf_index;
     packet.result = result;
-    packet.time = session->buf_time;
+    packet.time = curr->buf_time;
     session->completed_packet(&packet);
 }
 
 void session_reset(struct session *session) {
-    if (session->buf_index > 0) {
+    struct current_session *curr = &session->curr;
+    if (curr->buf_index > 0) {
         // Incomplete packet in buffer, consider it noise
         send_packet(session, NOISE);
-        session->buf_index = 0;
+        curr->buf_index = 0;
     }
-    memset(session->buf, 0, SESSION_BUFLEN);
-    session->state = INIT;
-    atr_init(&session->atr);
-    pps_init(&session->pps);
-    data_init(&session->data);
+    memset(&session->curr, 0, sizeof(struct current_session));
+    atr_init(&curr->atr);
+    pps_init(&curr->pps);
+    data_init(&curr->data);
     session->set_baudrate(session->serial_fd, session->base_baudrate);
 }
 
@@ -78,42 +79,43 @@ void session_init(struct session *session, completed_packet_fn completed_packet,
     session_reset(session);
 }
 
-static enum result session_analyze(struct session *session, unsigned char data, unsigned *complete) {
-    switch (session->state) {
+static enum result analyze_byte(struct current_session *curr,
+                                unsigned char data, unsigned *complete) {
+    switch (curr->state) {
         case INIT:
             // Ignore early noise
             if (data == 0x00 || data == 0xFF) return NOISE;
-            session->state = ATR;
+            curr->state = ATR;
             // Fallthrough
         case ATR:
-            return atr_analyze(&session->atr, data, complete);
+            return atr_analyze(&curr->atr, data, complete);
         case IDLE:
             if (data == 0xFF) {
                 // PPS start byte
-                session->state = PPS;
-                return pps_analyze(&session->pps, data, complete);
+                curr->state = PPS;
+                return pps_analyze(&curr->pps, data, complete);
             }
-            if (session->protocol_version == 0) {
-                session->state = T0_DATA;
-                return data_t0_analyze(&session->data, data);
+            if (curr->protocol_version == 0) {
+                curr->state = T0_DATA;
+                return data_t0_analyze(&curr->data, data);
             }
-            if (session->protocol_version == 1) {
-                session->state = T1_DATA;
-                return data_t1_analyze(&session->data, data);
+            if (curr->protocol_version == 1) {
+                curr->state = T1_DATA;
+                return data_t1_analyze(&curr->data, data);
             }
             return STATE_ERROR;
         case PPS:
-            return pps_analyze(&session->pps, data, complete);
+            return pps_analyze(&curr->pps, data, complete);
         case T0_DATA:
             {
-                int end_data = data_t0_analyze(&session->data, data);
-                if (end_data) session->state = IDLE;
+                int end_data = data_t0_analyze(&curr->data, data);
+                if (end_data) curr->state = IDLE;
                 return end_data;
             }
         case T1_DATA:
             {
-                int end_data = data_t1_analyze(&session->data, data);
-                if (end_data) session->state = IDLE;
+                int end_data = data_t1_analyze(&curr->data, data);
+                if (end_data) curr->state = IDLE;
                 return end_data;
             }
     }
@@ -121,40 +123,41 @@ static enum result session_analyze(struct session *session, unsigned char data, 
 }
 
 void session_add_byte(struct session *session, unsigned char data) {
+    struct current_session *curr = &session->curr;
     enum result res = STATE_ERROR;
     unsigned phase_complete = 0;
-    if (session->buf_index < SESSION_BUFLEN) {
-        session->buf[session->buf_index++] = data;
-        res = session_analyze(session, data, &phase_complete);
+    if (curr->buf_index < SESSION_BUFLEN) {
+        curr->buf[curr->buf_index++] = data;
+        res = analyze_byte(curr, data, &phase_complete);
     }
-    if (session->buf_index == 1) {
+    if (curr->buf_index == 1) {
         // Record time of first byte
-        gettimeofday(&session->buf_time, NULL);
+        gettimeofday(&curr->buf_time, NULL);
     }
     if (res) {
         send_packet(session, res);
-        memset(session->buf, 0, SESSION_BUFLEN);
-        session->buf_index = 0;
+        memset(curr->buf, 0, SESSION_BUFLEN);
+        curr->buf_index = 0;
         if (phase_complete) {
             unsigned proto = 0xFF;
             unsigned speed = 0xFF;
             char *phase = "?";
-            if (session->state == ATR) {
-                atr_result(&session->atr, &proto);
+            if (curr->state == ATR) {
+                atr_result(&curr->atr, &proto);
                 phase = "ATR";
-            } else if (session->state == PPS) {
-                pps_result(&session->pps, &proto, &speed);
+            } else if (curr->state == PPS) {
+                pps_result(&curr->pps, &proto, &speed);
                 phase = "PPS";
             }
-            if (proto != 0xFF && proto != session->protocol_version) {
-                session->protocol_version = proto;
+            if (proto != 0xFF && proto != curr->protocol_version) {
+                curr->protocol_version = proto;
                 fprintf(stderr, "== Switching to protocol T=%d after %s\n",
-                        session->protocol_version, phase);
+                        curr->protocol_version, phase);
             }
             if (speed != 0xFF) {
                 update_speed(session, speed, phase);
             }
-            session->state = IDLE;
+            curr->state = IDLE;
         }
     }
 }
