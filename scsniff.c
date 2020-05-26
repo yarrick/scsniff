@@ -27,6 +27,11 @@ static void wait_reset(int fd) {
     fprintf(stderr, "== Waiting for reset..  ");
     fflush(stderr);
     ioctl(fd, TIOCMIWAIT, TIOCM_CAR);
+    unsigned int status;
+    if (ioctl(fd, TIOCMGET, &status) != 0) {
+        fprintf(stderr, "Connection lost\n");
+        exit(1);
+    }
     fprintf(stderr, "Done\n");
     gettimeofday(&reset_time, NULL);
 }
