@@ -12,7 +12,7 @@ Features:
   * Data exchange (using T=0 or T=1 protocol)
   to identify packets and their data direction.
 
-- Automatic adjustment of baud rate to match the result from PPS exchange.
+- Automatic adjustment of baud rate to match changes after ATR & PPS.
 
 - Expects new reset being sent after a few seconds of no communication.
 
@@ -22,6 +22,11 @@ Features:
 How to build:
 
 Run `make`.
+
+
+How to run tests:
+
+With the check library installed, run `make test` and then ./test
 
 
 How to use:
@@ -45,10 +50,9 @@ the reader in my laptop and 5600 for a bank authentication device.
 
 Once you have found the correct baudrate scsniff will output any communication
 between the reader and the card. It will show the direction of the traffic when
-it can be inferred (missing for T=0 payloads).  With a data log similar to the
-examples below, use the ISO 7816-3 (for transport layer) and 7816-4 (for
-application data) specifications (available online for free) to decode the
-traffic.
+it can be inferred (missing for some T=0 payloads).  With a data log similar to
+the examples below, use the ISO 7816-3 (for transport layer) and 7816-4 (for
+application data) specifications to decode the traffic.
 
 
 Not yet supported:
@@ -57,7 +61,7 @@ Not yet supported:
   intercepted ISO 7816-3 smartcard communication. Wireshark also does not yet
   have a dissector for ISO 7816-3 traffic.
 
-- Changing speed based on indication in TA3 field in ATR
+- Handling inverse convention (reverse bit order) from card.
 
 - Detecting in ATR if CRC 16 error checking is enabled for T=1 protocol.
 

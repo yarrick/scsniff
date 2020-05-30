@@ -3,11 +3,13 @@
 #include <check.h>
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+#define NO_UPDATE (0xFFFF)
 
 static const struct sample {
     unsigned char data[32];
     unsigned len;
     unsigned first_protocol;
+    unsigned speed;
 } samples[] = {
     { // T0 only and 2 historical bytes.
         .data = {0x3B, 0x02, 0x36, 0x02}, .len = 4
@@ -32,6 +34,10 @@ static const struct sample {
         .data = {0x3B, 0x93, 0x95, 0x80, 0x1F, 0xC7, 0x80, 0x31, 0x80, 0x6F},
         .len = 10,
     },
+    { // TA(1) and TA(2) supplied, new speed in use.
+        .data = {0x3B, 0xD2, 0x13, 0xFF, 0x10, 0x80, 0x07, 0x14},
+        .len = 8, .speed = 0x13,
+    },
 };
 
 START_TEST(parse_sample)
@@ -39,7 +45,8 @@ START_TEST(parse_sample)
     struct atr atr;
     const struct sample *s = &samples[_i];
     int pos;
-    unsigned first_proto = 0;
+    unsigned new_proto = 0;
+    unsigned new_speed = NO_UPDATE;
     atr_init(&atr);
     for (pos = 0; pos < s->len; pos++) {
         unsigned complete = 0;
@@ -54,8 +61,11 @@ START_TEST(parse_sample)
             ck_assert_uint_eq(complete, 0);
         }
     }
-    atr_result(&atr, &first_proto);
-    ck_assert_uint_eq(first_proto, s->first_protocol);
+    atr_result(&atr, &new_proto, &new_speed);
+    ck_assert_uint_eq(new_proto, s->first_protocol);
+    if (new_speed != NO_UPDATE) {
+        ck_assert_uint_eq(new_speed, s->speed);
+    }
 }
 END_TEST
 

@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define NO_UPDATE (0xFFFF)
+
 // From ISO/IEC 7816-3:2006 Section 8.3 Table 7
 static unsigned clock_conversion(unsigned char speed) {
     switch (speed >> 4) {
@@ -139,22 +141,22 @@ void session_add_byte(struct session *session, unsigned char data) {
         memset(curr->buf, 0, SESSION_BUFLEN);
         curr->buf_index = 0;
         if (phase_complete) {
-            unsigned proto = 0xFF;
-            unsigned speed = 0xFF;
+            unsigned proto = NO_UPDATE;
+            unsigned speed = NO_UPDATE;
             char *phase = "?";
             if (curr->state == ATR) {
-                atr_result(&curr->atr, &proto);
+                atr_result(&curr->atr, &proto, &speed);
                 phase = "ATR";
             } else if (curr->state == PPS) {
                 pps_result(&curr->pps, &proto, &speed);
                 phase = "PPS";
             }
-            if (proto != 0xFF && proto != curr->protocol_version) {
+            if (proto != NO_UPDATE && proto != curr->protocol_version) {
                 curr->protocol_version = proto;
                 fprintf(stderr, "== Switching to protocol T=%d after %s\n",
                         curr->protocol_version, phase);
             }
-            if (speed != 0xFF) {
+            if (speed != NO_UPDATE) {
                 update_speed(session, speed, phase);
             }
             curr->state = IDLE;

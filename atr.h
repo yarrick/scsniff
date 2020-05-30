@@ -5,7 +5,9 @@
 
 enum atr_state {
     WAIT_T0 = 0,
+    WAIT_TA_TD,
     WAIT_TD,
+    WAIT_TA_END,
     WAIT_END,
     ATR_DONE
 };
@@ -16,13 +18,16 @@ struct atr {
     unsigned first_protocol_suggested;
     unsigned latest_protocol;
     unsigned num_historical_bytes;
+    unsigned t_cycle;
+    unsigned ta1_value;
+    unsigned ta2_seen;
 };
 
 void atr_init(struct atr *atr);
 
 enum result atr_analyze(struct atr *atr, unsigned char data, unsigned *complete);
 
-void atr_result(struct atr *atr, unsigned *new_proto);
+void atr_result(struct atr *atr, unsigned *new_proto, unsigned *new_speed);
 
 void atr_print_state(struct atr *atr);
 
