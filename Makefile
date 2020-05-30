@@ -11,3 +11,6 @@ clean:
 
 scsniff: scsniff.o atr.o session.o pps.o data.o
 	$(CC) -o $@ $^
+
+test: atr.o atr_test.o
+	$(CC) -o $@ -lcheck $^
