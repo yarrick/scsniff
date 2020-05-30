@@ -59,18 +59,10 @@ START_TEST(parse_sample)
 }
 END_TEST
 
-int main() {
-    SRunner *runner;
-    int failed;
+Suite* atr_tests() {
     Suite* suite = suite_create("atr");
     TCase* test = tcase_create("atr");
     tcase_add_loop_test(test, parse_sample, 0, ARRAY_SIZE(samples));
     suite_add_tcase(suite, test);
-
-    runner = srunner_create(suite);
-    srunner_run_all(runner, CK_NORMAL);
-    failed = srunner_ntests_failed(runner);
-    srunner_free(runner);
-
-    return failed;
+    return suite;
 }

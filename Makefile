@@ -7,10 +7,10 @@ CFLAGS = -std=c99 -Wall -pedantic -Wtype-limits
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f scsniff *.o
+	rm -f scsniff test *.o
 
 scsniff: scsniff.o atr.o session.o pps.o data.o
 	$(CC) -o $@ $^
 
-test: atr.o atr_test.o
+test: atr.o atr_test.o data.o data_test.o test.o
 	$(CC) -o $@ -lcheck $^
