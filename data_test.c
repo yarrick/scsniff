@@ -5,6 +5,33 @@
 #define T0_BYTE(data,byte,exp) ck_assert_uint_eq( \
     data_t0_analyze((data),(byte)), (exp))
 
+START_TEST(t0_empty_ack)
+{
+    struct data data;
+    data_init(&data);
+    // Get data, 4 bytes
+    T0_BYTE(&data, 0x00, CONTINUE);
+    T0_BYTE(&data, 0xCA, CONTINUE);
+    T0_BYTE(&data, 0x01, CONTINUE);
+    T0_BYTE(&data, 0x00, CONTINUE);
+    T0_BYTE(&data, 0x04, PACKET_TO_CARD);
+    // ACK
+    T0_BYTE(&data, 0xCA, PACKET_FROM_CARD);
+    // Remaining bytes
+    T0_BYTE(&data, 0x01, CONTINUE);
+    T0_BYTE(&data, 0x02, CONTINUE);
+    T0_BYTE(&data, 0x03, CONTINUE);
+    T0_BYTE(&data, 0x04, PACKET_FROM_CARD);
+    // Extra ACKs, no data remaining
+    T0_BYTE(&data, 0xCA, PACKET_FROM_CARD);
+    T0_BYTE(&data, 0xCA, PACKET_FROM_CARD);
+    T0_BYTE(&data, 0xCA, PACKET_FROM_CARD);
+    // Status bytes
+    T0_BYTE(&data, 0x90, CONTINUE);
+    T0_BYTE(&data, 0x00, PACKET_FROM_CARD);
+}
+END_TEST
+
 START_TEST(t0_null_procedure_byte)
 {
     struct data data;
@@ -28,6 +55,7 @@ START_TEST(t0_null_procedure_byte)
     T0_BYTE(&data, 0x03, CONTINUE);
     T0_BYTE(&data, 0x04, PACKET_FROM_CARD);
     // NULL procedure byte
+    T0_BYTE(&data, 0x60, PACKET_FROM_CARD);
     T0_BYTE(&data, 0x60, PACKET_FROM_CARD);
     // Status bytes
     T0_BYTE(&data, 0x90, CONTINUE);
@@ -108,6 +136,7 @@ END_TEST
 Suite* data_tests() {
     Suite* suite = suite_create("data");
     TCase* test = tcase_create("data");
+    tcase_add_test(test, t0_empty_ack);
     tcase_add_test(test, t0_null_procedure_byte);
     tcase_add_test(test, t0_single_byte_transfer);
     tcase_add_test(test, t0_get_response);
