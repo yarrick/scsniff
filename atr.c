@@ -20,8 +20,8 @@ static int handle_t_bits(struct atr *atr, unsigned char data) {
     } else {
         // T bytes and historical data left
         atr->bytes_left = t_bytes + atr->num_historical_bytes;
-        // Add TCK byte if higher protocol suggested
-        if (atr->max_protocol_suggested > 0) atr->bytes_left++;
+        // Expect TCK byte if higher protocol mentioned
+        if (atr->latest_protocol > 0) atr->bytes_left++;
         atr->state = WAIT_END;
     }
     if (atr->bytes_left == 0) {
@@ -51,9 +51,9 @@ enum result atr_analyze(struct atr *atr, unsigned char data, unsigned *complete)
                 if (atr->first_protocol_suggested == 0xFF) {
                     atr->first_protocol_suggested = version;
                 }
-                // Lower nibble of TD is suggested protocol (if not 15)
-                if (version < 15 && version > atr->max_protocol_suggested) {
-                    atr->max_protocol_suggested = version;
+                // Lower nibble of TD is protocol (15=global settings)
+                if (version > atr->latest_protocol) {
+                    atr->latest_protocol = version;
                 }
                 return handle_t_bits(atr, data);
             }
@@ -75,7 +75,8 @@ void atr_result(struct atr *atr, unsigned *new_proto) {
 void atr_print_state(struct atr *atr) {
     static const char* state_names[] =
         { "WAIT_T0", "WAIT_TD", "WAIT_END", "ATR_DONE" };
-    printf("State %s, need %d bytes (%d hist bytes, first proto %d, max proto %d)\n",
+    printf("State %s, need %d bytes (%d hist bytes, first proto %d, "
+        "latest proto %d)\n",
         state_names[atr->state], atr->bytes_left, atr->num_historical_bytes,
-        atr->first_protocol_suggested, atr->max_protocol_suggested);
+        atr->first_protocol_suggested, atr->latest_protocol);
 }

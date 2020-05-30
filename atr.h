@@ -14,7 +14,7 @@ struct atr {
     enum atr_state state;
     unsigned bytes_left;
     unsigned first_protocol_suggested;
-    unsigned max_protocol_suggested;
+    unsigned latest_protocol;
     unsigned num_historical_bytes;
 };
 
