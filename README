@@ -1,4 +1,4 @@
-scsniff - Smartcard sniffer for Linux
+scsniff - Smartcard sniffer for Linux, by Erik Ekman <erik@kryo.se>
 
 Records communication between smartcard and reader, captured with
 a smartcard data logger (also known as "season interface").
