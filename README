@@ -1,7 +1,8 @@
 scsniff - Smartcard sniffer for Linux, by Erik Ekman <erik@kryo.se>
 
 Records communication between smartcard and reader, captured with
-a smartcard data logger (also known as "season interface").
+a smartcard data logger (also known as "season interface"),
+and splits the traffic stream into packets.
 
 
 Features:
@@ -12,7 +13,7 @@ Features:
   * Data exchange (using T=0 or T=1 protocol)
   to identify packets and their data direction.
 
-- Automatic adjustment of baud rate to match changes after ATR & PPS.
+- Follows baud rate and protocol changes seen in ATR & PPS messages.
 
 - Expects new reset being sent after a few seconds of no communication.
 
@@ -26,7 +27,7 @@ Run `make`.
 
 How to run tests:
 
-With the check library installed, run `make test` and then ./test
+With the check library installed, run `make test && ./test`
 
 
 How to use:
