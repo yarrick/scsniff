@@ -109,17 +109,9 @@ static enum result analyze_byte(struct current_session *curr,
         case PPS:
             return pps_analyze(&curr->pps, data, complete);
         case T0_DATA:
-            {
-                int end_data = data_t0_analyze(&curr->data, data);
-                if (end_data) curr->state = IDLE;
-                return end_data;
-            }
+            return data_t0_analyze(&curr->data, data);
         case T1_DATA:
-            {
-                int end_data = data_t1_analyze(&curr->data, data);
-                if (end_data) curr->state = IDLE;
-                return end_data;
-            }
+            return data_t1_analyze(&curr->data, data);
     }
     return STATE_ERROR;
 }
