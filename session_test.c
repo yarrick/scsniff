@@ -7,7 +7,7 @@
 
 static struct session sess;
 
-static unsigned last_baudrate = TEST_BAUDRATE;
+static unsigned last_baudrate = 0;
 static unsigned baudrate_set = 0;
 static void new_baudrate(int fd, unsigned baudrate) {
     ck_assert_uint_eq(fd, TEST_FD);
@@ -51,6 +51,13 @@ static void inject_packet(unsigned char *data, unsigned len) {
         ck_assert_uint_eq(sess.curr.state, (sess_state)); \
         memset(&last_packet, 0, sizeof(last_packet)); \
     } while (0)
+
+START_TEST(baudrate_setup)
+{
+    // Baudrate should be configured as session starts.
+    ck_assert_uint_eq(last_baudrate, TEST_BAUDRATE);
+}
+END_TEST
 
 START_TEST(baudrate_switch_atr)
 {
@@ -153,6 +160,7 @@ Suite* session_tests() {
     Suite* suite = suite_create("session");
     TCase* test = tcase_create("session");
     tcase_add_checked_fixture(test, setup, NULL);
+    tcase_add_test(test, baudrate_setup);
     tcase_add_test(test, baudrate_switch_atr);
     tcase_add_test(test, baudrate_switch_pps);
     tcase_add_test(test, protocol_switch_atr);
