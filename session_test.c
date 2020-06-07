@@ -132,6 +132,22 @@ START_TEST(t0_data_exchange)
 }
 END_TEST
 
+START_TEST(t1_data_exchange)
+{
+    unsigned char atr[] = {
+        0x3B, 0xFF, 0x13, 0x00, 0x00, 0x81, 0x31, 0xFE, 0x45, 0x43, 0x44,
+        0x32, 0x69, 0xA9, 0x41, 0x00, 0x00, 0x20, 0x20, 0x20, 0x20, 0x20,
+        0x20, 0x00, 0x53 };
+    INJECT_PACKET(atr, PACKET_FROM_CARD, IDLE);
+    ck_assert_uint_eq(sess.curr.protocol_version, 1);
+
+    unsigned char t1_cmd[] = { 0x00, 0xC1, 0x01, 0xFE, 0x3E };
+    INJECT_PACKET(t1_cmd, PACKET_TO_CARD, T1_DATA);
+    unsigned char t1_resp[] = { 0x00, 0xE1, 0x01, 0xFE, 0x1E };
+    INJECT_PACKET(t1_resp, PACKET_FROM_CARD, T1_DATA);
+}
+END_TEST
+
 Suite* session_tests() {
     Suite* suite = suite_create("session");
     TCase* test = tcase_create("session");
@@ -141,6 +157,7 @@ Suite* session_tests() {
     tcase_add_test(test, protocol_switch_atr);
     tcase_add_test(test, protocol_switch_pps);
     tcase_add_test(test, t0_data_exchange);
+    tcase_add_test(test, t1_data_exchange);
     suite_add_tcase(suite, test);
     return suite;
 }
