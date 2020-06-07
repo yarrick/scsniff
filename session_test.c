@@ -8,7 +8,9 @@
 static struct session sess;
 
 static unsigned last_baudrate = TEST_BAUDRATE;
+static unsigned baudrate_set = 0;
 static void new_baudrate(int fd, unsigned baudrate) {
+    baudrate_set++;
     last_baudrate = baudrate;
 }
 
@@ -102,7 +104,9 @@ START_TEST(protocol_switch_pps)
     unsigned char pps[] = { 0xFF, 0x11, 0x11, 0xFC };
     INJECT_PACKET(pps, PACKET_TO_CARD, PPS);
     INJECT_PACKET(pps, PACKET_FROM_CARD, IDLE);
-    ck_assert_uint_eq(last_baudrate, TEST_BAUDRATE);
+    // Baudrate not set again after init.
+    ck_assert_uint_eq(baudrate_set, 1);
+    ck_assert_str_eq(last_msg, "Switching to protocol T=1 after PPS");
     ck_assert_uint_eq(sess.curr.protocol_version, 1);
 
     unsigned char t1_data[] = { 0x00, 0xC1, 0x01, 0xFE, 0x3E };
@@ -128,7 +132,6 @@ START_TEST(t0_data_exchange)
 }
 END_TEST
 
-END_TEST
 Suite* session_tests() {
     Suite* suite = suite_create("session");
     TCase* test = tcase_create("session");

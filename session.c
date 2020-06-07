@@ -73,14 +73,17 @@ void session_reset(struct session *session) {
     atr_init(&curr->atr);
     pps_init(&curr->pps);
     data_init(&curr->data);
+    curr->baudrate = session->base_baudrate;
     session->set_baudrate(session->serial_fd, session->base_baudrate);
 }
 
 static void update_speed(struct session *session, unsigned speed, char *phase) {
     unsigned new_etu = clock_conversion(speed) / baud_divisor(speed);
     unsigned baudrate = session->base_baudrate * BASE_ETU / ((float) new_etu);
+    if (baudrate == session->curr.baudrate) return;
     session_log(session, "Switching to %d ticks per ETU (%d baud) after %s",
                 new_etu, baudrate, phase);
+    session->curr.baudrate = baudrate;
     session->set_baudrate(session->serial_fd, baudrate);
 }
 

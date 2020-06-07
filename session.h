@@ -39,6 +39,7 @@ struct current_session {
     enum session_state state;
     struct timeval buf_time;
     unsigned protocol_version;
+    unsigned baudrate;
     struct atr atr;
     struct pps pps;
     struct data data;
