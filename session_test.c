@@ -19,9 +19,16 @@ static void new_packet(struct packet *packet) {
     memcpy(last_data, packet->data, packet->data_length);
 }
 
+static char last_msg[SESSION_BUFLEN];
+static void log_msg(const char *msg) {
+    strncpy(last_msg, msg, SESSION_BUFLEN);
+}
+
 static void setup() {
-    session_init(&sess, new_packet, new_baudrate, TEST_FD, TEST_BAUDRATE);
+    session_init(&sess, new_packet, new_baudrate, log_msg,
+                 TEST_FD, TEST_BAUDRATE);
     memset(&last_packet, 0, sizeof(last_packet));
+    memset(&last_msg, 0, sizeof(last_msg));
 }
 
 static void inject_packet(unsigned char *data, unsigned len) {
@@ -47,6 +54,8 @@ START_TEST(baudrate_switch_atr)
     unsigned char atr[] = { 0x3B, 0xD2, 0x13, 0xFF, 0x10, 0x80, 0x07, 0x14};
     INJECT_PACKET(atr, PACKET_FROM_CARD, IDLE);
     ck_assert_uint_eq(last_baudrate, TEST_BAUDRATE*4);
+    ck_assert_str_eq(last_msg,
+                     "Switching to 93 ticks per ETU (38400 baud) after ATR");
     ck_assert_uint_eq(sess.curr.protocol_version, 0);
 }
 END_TEST
@@ -63,6 +72,8 @@ START_TEST(baudrate_switch_pps)
     INJECT_PACKET(pps, PACKET_TO_CARD, PPS);
     INJECT_PACKET(pps, PACKET_FROM_CARD, IDLE);
     ck_assert_uint_eq(last_baudrate, TEST_BAUDRATE*4);
+    ck_assert_str_eq(last_msg,
+                     "Switching to 93 ticks per ETU (38400 baud) after PPS");
     ck_assert_uint_eq(sess.curr.protocol_version, 0);
 }
 END_TEST
@@ -74,6 +85,7 @@ START_TEST(protocol_switch_atr)
         0x32, 0x69, 0xA9, 0x41, 0x00, 0x00, 0x20, 0x20, 0x20, 0x20, 0x20,
         0x20, 0x00, 0x53 };
     INJECT_PACKET(atr, PACKET_FROM_CARD, IDLE);
+    ck_assert_str_eq(last_msg, "Switching to protocol T=1 after ATR");
     ck_assert_uint_eq(sess.curr.protocol_version, 1);
 
     unsigned char t1_data[] = { 0x00, 0xC1, 0x01, 0xFE, 0x3E };

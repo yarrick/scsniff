@@ -62,6 +62,10 @@ static void handle_packet(struct packet *packet) {
     printf("\n");
 }
 
+static void log_message(const char *message) {
+    fprintf(stderr, "== %s\n", message);
+}
+
 int main(int argc, char **argv) {
     if (argc < 2) usage(argv[0]);
     int fd = open(argv[1], O_RDONLY | O_NOCTTY | O_NDELAY);
@@ -81,7 +85,8 @@ int main(int argc, char **argv) {
     fprintf(stderr, "== Opened %s\n", argv[1]);
 
     struct session session;
-    session_init(&session, handle_packet, setup_serial, fd, baudrate);
+    session_init(&session, handle_packet, setup_serial, log_message,
+                 fd, baudrate);
 
     while (1) {
         fprintf(stderr, "== Speed: %d baud\n", baudrate);

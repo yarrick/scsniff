@@ -1,5 +1,6 @@
 #include "session.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -49,6 +50,18 @@ static void send_packet(struct session *session, enum result result) {
     session->completed_packet(&packet);
 }
 
+static void session_log(struct session *session, const char *fmt, ...) {
+    char buf[SESSION_BUFLEN];
+    int size = sizeof(buf);
+    int len;
+    va_list args;
+    va_start(args, fmt);
+    len = vsnprintf(buf, size, fmt, args);
+    va_end(args);
+    if (len >= SESSION_BUFLEN) buf[SESSION_BUFLEN-1] = 0;
+    if (len > 0) session->log_msg(buf);
+}
+
 void session_reset(struct session *session) {
     struct current_session *curr = &session->curr;
     if (curr->buf_index > 0) {
@@ -66,18 +79,20 @@ void session_reset(struct session *session) {
 static void update_speed(struct session *session, unsigned speed, char *phase) {
     unsigned new_etu = clock_conversion(speed) / baud_divisor(speed);
     unsigned baudrate = session->base_baudrate * BASE_ETU / ((float) new_etu);
-    fprintf(stderr, "== Switching to %d ticks per ETU (%d baud) after %s\n",
-            new_etu, baudrate, phase);
+    session_log(session, "Switching to %d ticks per ETU (%d baud) after %s",
+                new_etu, baudrate, phase);
     session->set_baudrate(session->serial_fd, baudrate);
 }
 
 void session_init(struct session *session, completed_packet_fn completed_packet,
-                  set_baudrate_fn set_baudrate, int fd, unsigned baudrate) {
+                  set_baudrate_fn set_baudrate, log_msg_fn log_msg, int fd,
+                  unsigned baudrate) {
     memset(session, 0, sizeof(struct session));
     session->set_baudrate = set_baudrate;
     session->serial_fd = fd;
     session->base_baudrate = baudrate;
     session->completed_packet = completed_packet;
+    session->log_msg = log_msg;
     session_reset(session);
 }
 
@@ -145,8 +160,8 @@ void session_add_byte(struct session *session, unsigned char data) {
             }
             if (proto != NO_UPDATE && proto != curr->protocol_version) {
                 curr->protocol_version = proto;
-                fprintf(stderr, "== Switching to protocol T=%d after %s\n",
-                        curr->protocol_version, phase);
+                session_log(session, "Switching to protocol T=%d after %s",
+                            curr->protocol_version, phase);
             }
             if (speed != NO_UPDATE) {
                 update_speed(session, speed, phase);
