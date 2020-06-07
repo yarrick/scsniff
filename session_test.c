@@ -10,6 +10,7 @@ static struct session sess;
 static unsigned last_baudrate = TEST_BAUDRATE;
 static unsigned baudrate_set = 0;
 static void new_baudrate(int fd, unsigned baudrate) {
+    ck_assert_uint_eq(fd, TEST_FD);
     baudrate_set++;
     last_baudrate = baudrate;
 }
