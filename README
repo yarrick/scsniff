@@ -94,8 +94,6 @@ $ ./scsniff /dev/ttyUSB0 10500
 == Opened /dev/ttyUSB0
 == Speed: 10500 baud
 == Waiting for reset..  Done
-+0.000017s | NOISE?? | 00
-+0.000719s | NOISE?? | 00
 +0.017285s | CARD>>> | 3B FF 13 00 00 81 31 FE 45 43 44 32 69 A9 41 00 00 20 20 20 20 20 20 00 53
 == Switching to protocol T=1 after ATR
 +1.267620s | CARD<<< | 00 C1 01 FE 3E

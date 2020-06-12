@@ -23,17 +23,21 @@ static void setup_serial(int fd, unsigned speed) {
     ioctl(fd, TCSETS2, &tio);
 }
 
+static reset_active(int fd) {
+    unsigned int status;
+    if (ioctl(fd, TIOCMGET, &status) != 0) {
+        fprintf(stderr, "Connection lost\n");
+        exit(1);
+    }
+    return status & TIOCM_CAR;
+}
+
 static struct timeval reset_time;
 
 static void wait_reset(int fd) {
     fprintf(stderr, "== Waiting for reset..  ");
     fflush(stderr);
     ioctl(fd, TIOCMIWAIT, TIOCM_CAR);
-    unsigned int status;
-    if (ioctl(fd, TIOCMGET, &status) != 0) {
-        fprintf(stderr, "Connection lost\n");
-        exit(1);
-    }
     fprintf(stderr, "Done\n");
     gettimeofday(&reset_time, NULL);
 }
@@ -91,6 +95,11 @@ int main(int argc, char **argv) {
     while (1) {
         fprintf(stderr, "== Speed: %d baud\n", baudrate);
         wait_reset(fd);
+        while (reset_active(fd)) {
+            // Eat noise while reset active.
+            unsigned char c;
+            read(fd, &c, 1);
+        }
         int loops = 0;
         while (1) {
             unsigned char c;
