@@ -39,7 +39,6 @@ static void wait_reset(int fd) {
     fflush(stderr);
     ioctl(fd, TIOCMIWAIT, TIOCM_CAR);
     fprintf(stderr, "Done\n");
-    gettimeofday(&reset_time, NULL);
 }
 
 static void usage(char *name) {
@@ -94,26 +93,38 @@ int main(int argc, char **argv) {
 
     while (1) {
         fprintf(stderr, "== Speed: %d baud\n", baudrate);
-        wait_reset(fd);
+        if (!reset_active(fd)) wait_reset(fd);
+        gettimeofday(&reset_time, NULL);
         while (reset_active(fd)) {
             // Eat noise while reset active.
             unsigned char c;
             read(fd, &c, 1);
         }
         int loops = 0;
+        int resets = 0;
         while (1) {
             unsigned char c;
             if (read(fd, &c, 1) >0) {
                 loops = 0;
-                session_add_byte(&session, c);
+                if (resets < 15) session_add_byte(&session, c);
+            }
+            if (reset_active(fd)) {
+                resets++;
+                if (resets > 50) {
+                    fprintf(stderr, "\n========================="
+                                    "\n== Got warm reset or deactivate\n");
+                    break;
+                }
+            } else {
+                resets = 0;
             }
             loops++;
             if (loops > 3000000) {
-                session_reset(&session);
                 fprintf(stderr, "\n=========================\n== Timeout!\n");
                 break;
             }
         }
+        session_reset(&session);
     }
     return 0;
 }

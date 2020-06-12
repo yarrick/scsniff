@@ -15,7 +15,8 @@ Features:
 
 - Follows baud rate and protocol changes seen in ATR & PPS messages.
 
-- Expects new reset being sent after a few seconds of no communication.
+- Expects new reset being sent after a few seconds of no communication,
+  and detects unexpected resets (warm reset or deactivate).
 
 - Identifies transfer direction for most T=0 data fields.
 
@@ -65,8 +66,6 @@ Not yet supported:
 - Handling inverse convention (reverse bit order) from card.
 
 - Detecting in ATR if CRC 16 error checking is enabled for T=1 protocol.
-
-- Detecting card powerdown signal from reset pin (or reset before timeout).
 
 - Fully inferring data transfer direction for T=0 based on command parameters.
 
