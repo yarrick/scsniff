@@ -23,7 +23,7 @@ static void setup_serial(int fd, unsigned speed) {
     ioctl(fd, TCSETS2, &tio);
 }
 
-static reset_active(int fd) {
+static int reset_active(int fd) {
     unsigned int status;
     if (ioctl(fd, TIOCMGET, &status) != 0) {
         fprintf(stderr, "Connection lost\n");
