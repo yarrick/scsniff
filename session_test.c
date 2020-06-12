@@ -109,7 +109,7 @@ START_TEST(protocol_switch_pps)
     INJECT_PACKET(atr, PACKET_FROM_CARD, IDLE);
     ck_assert_uint_eq(sess.curr.protocol_version, 0);
 
-    unsigned char pps[] = { 0xFF, 0x11, 0x11, 0xFC };
+    unsigned char pps[] = { 0xFF, 0x01, 0xFC };
     INJECT_PACKET(pps, PACKET_TO_CARD, PPS);
     INJECT_PACKET(pps, PACKET_FROM_CARD, IDLE);
     // Baudrate not set again after init.
@@ -119,6 +119,22 @@ START_TEST(protocol_switch_pps)
 
     unsigned char t1_data[] = { 0x00, 0xC1, 0x01, 0xFE, 0x3E };
     INJECT_PACKET(t1_data, PACKET_TO_CARD, T1_DATA);
+    ck_assert_uint_eq(sess.curr.protocol_version, 1);
+}
+END_TEST
+
+START_TEST(baudrate_protocol_switch_pps)
+{
+    unsigned char atr[] = {
+        0x3B, 0x95, 0x96, 0x80, 0xB1, 0xFE, 0x55, 0x1F, 0xC7,
+        0x47, 0x72, 0x61, 0x63, 0x65, 0x13 };
+    INJECT_PACKET(atr, PACKET_FROM_CARD, IDLE);
+    ck_assert_uint_eq(sess.curr.protocol_version, 0);
+
+    unsigned char pps[] = { 0xFF, 0x11, 0x13, 0xFC };
+    INJECT_PACKET(pps, PACKET_TO_CARD, PPS);
+    INJECT_PACKET(pps, PACKET_FROM_CARD, IDLE);
+    ck_assert_uint_eq(last_baudrate, TEST_BAUDRATE*4);
     ck_assert_uint_eq(sess.curr.protocol_version, 1);
 }
 END_TEST
@@ -165,6 +181,7 @@ Suite* session_tests() {
     tcase_add_test(test, baudrate_switch_pps);
     tcase_add_test(test, protocol_switch_atr);
     tcase_add_test(test, protocol_switch_pps);
+    tcase_add_test(test, baudrate_protocol_switch_pps);
     tcase_add_test(test, t0_data_exchange);
     tcase_add_test(test, t1_data_exchange);
     suite_add_tcase(suite, test);
