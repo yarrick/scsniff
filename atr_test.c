@@ -38,6 +38,12 @@ static const struct sample {
         .data = {0x3B, 0xD2, 0x13, 0xFF, 0x10, 0x80, 0x07, 0x14},
         .len = 8, .speed = 0x13,
     },
+    { // TD(1) present but as last byte.
+        .data = {0x3B, 0x80, 0x00}, .len = 3,
+    },
+    { // Minimal ATR.
+        .data = {0x3B, 0x00}, .len = 2,
+    },
 };
 
 START_TEST(parse_sample)

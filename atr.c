@@ -13,7 +13,7 @@ void atr_init(struct atr *atr) {
     atr->ta1_value = NO_VALUE;
 }
 
-static int handle_t_bits(struct atr *atr, unsigned char data) {
+static int handle_t_bits(struct atr *atr, unsigned char data, unsigned *complete) {
     unsigned t_bytes = __builtin_popcount(data & 0xF0);
     if (data & 0x80) {
         // Another TD byte coming
@@ -31,6 +31,7 @@ static int handle_t_bits(struct atr *atr, unsigned char data) {
     if (atr->bytes_left == 0) {
         // No more T bytes or historical bytes
         atr->state = ATR_DONE;
+        if (complete) *complete = 1;
         return PACKET_FROM_CARD;
     }
     return CONTINUE;
@@ -71,7 +72,7 @@ enum result atr_analyze(struct atr *atr, unsigned char data, unsigned *complete)
             atr->num_historical_bytes = data & 0xF;
             // Got bits for TA1, TB1 etc
             atr->t_cycle = 1;
-            return handle_t_bits(atr, data);
+            return handle_t_bits(atr, data, complete);
         case WAIT_TD:
             {
                 unsigned char version = data & 0xF;
@@ -84,7 +85,7 @@ enum result atr_analyze(struct atr *atr, unsigned char data, unsigned *complete)
                 if (version > atr->latest_protocol) {
                     atr->latest_protocol = version;
                 }
-                return handle_t_bits(atr, data);
+                return handle_t_bits(atr, data, complete);
             }
         case WAIT_END:
             atr->state = ATR_DONE;
