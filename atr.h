@@ -32,6 +32,4 @@ enum result atr_analyze(struct atr *atr, unsigned char data, unsigned *complete)
 
 void atr_result(struct atr *atr, unsigned *new_proto, unsigned *new_speed);
 
-void atr_print_state(struct atr *atr);
-
 #endif // SCSNIFF_ATR_H

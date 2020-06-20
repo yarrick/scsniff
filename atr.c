@@ -104,12 +104,3 @@ void atr_result(struct atr *atr, unsigned *new_proto, unsigned *new_speed) {
         *new_speed = atr->ta1_value;
     }
 }
-
-void atr_print_state(struct atr *atr) {
-    static const char* state_names[] =
-        { "WAIT_T0", "WAIT_TD", "WAIT_END", "ATR_DONE" };
-    printf("State %s, need %d bytes (%d hist bytes, first proto %d, "
-        "latest proto %d)\n",
-        state_names[atr->state], atr->bytes_left, atr->num_historical_bytes,
-        atr->first_protocol_suggested, atr->latest_protocol);
-}
