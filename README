@@ -20,6 +20,8 @@ Features:
 
 - Identifies transfer direction for most T=0 data fields.
 
+- Handles direct and inverse convention.
+
 
 How to build:
 
@@ -62,8 +64,6 @@ Not yet supported:
 - Saving data as pcap. There is not yet a datalink format that is suitable for
   intercepted ISO 7816-3 smartcard communication. Wireshark also does not yet
   have a dissector for ISO 7816-3 traffic.
-
-- Handling inverse convention (reverse bit order) from card.
 
 - Detecting in ATR if CRC 16 error checking is enabled for T=1 protocol.
 

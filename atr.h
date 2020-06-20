@@ -3,6 +3,9 @@
 
 #include "result.h"
 
+#define ATR_TS_DIRECT (0x3B)
+#define ATR_TS_INVERSE (0x3F)
+
 enum atr_state {
     WAIT_T0 = 0,
     WAIT_TA_TD,

@@ -134,11 +134,28 @@ static enum result analyze_byte(struct current_session *curr,
     return STATE_ERROR;
 }
 
+static unsigned char convert_from_inverse(unsigned char data) {
+    unsigned i;
+    unsigned char out = 0;
+    for (i = 0; i < 8; i++) {
+        if (((data >> i) & 0x01) == 0) {
+            out |= 1 << (7-i);
+        }
+    }
+    return out;
+}
+
 void session_add_byte(struct session *session, unsigned char data) {
     struct current_session *curr = &session->curr;
     enum result res = STATE_ERROR;
     unsigned phase_complete = 0;
+    if (curr->state == INIT && convert_from_inverse(data) == ATR_TS_INVERSE) {
+        // Inverse convention signaled in start of ATR
+        curr->inverse_convention = 1;
+        session_log(session, "Switching to inverse convention");
+    }
     if (curr->buf_index < SESSION_BUFLEN) {
+        if (curr->inverse_convention) data = convert_from_inverse(data);
         curr->buf[curr->buf_index++] = data;
         res = analyze_byte(curr, data, &phase_complete);
     }

@@ -40,6 +40,7 @@ struct current_session {
     struct timeval buf_time;
     unsigned protocol_version;
     unsigned baudrate;
+    unsigned inverse_convention;
     struct atr atr;
     struct pps pps;
     struct data data;

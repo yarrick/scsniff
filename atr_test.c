@@ -44,6 +44,10 @@ static const struct sample {
     { // Minimal ATR.
         .data = {0x3B, 0x00}, .len = 2,
     },
+    { // Inverse convention (converted at session layer).
+        .data = {0x3F, 0x65, 0x25, 0x08, 0x33, 0x04, 0x20, 0x90, 0x00},
+        .len = 9,
+    }
 };
 
 START_TEST(parse_sample)
