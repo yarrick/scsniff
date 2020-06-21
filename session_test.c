@@ -107,6 +107,7 @@ START_TEST(protocol_switch_atr)
     INJECT_PACKET(t1_data, t1_data, PACKET_TO_CARD, T1_DATA);
     ck_assert_uint_eq(sess.curr.protocol_version, 1);
 }
+END_TEST
 
 START_TEST(protocol_switch_pps)
 {

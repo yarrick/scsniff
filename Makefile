@@ -16,7 +16,7 @@ scsniff: scsniff.o $(MODULES)
 	$(CC) -o $@ $^
 
 test: test.o $(MODULES) atr_test.o data_test.o session_test.o
-	$(CC) -o $@ -lcheck $^
+	$(CC) -o $@ $^ `pkg-config --libs check`
 
 check: test
 	./test
