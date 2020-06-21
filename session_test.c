@@ -139,6 +139,16 @@ START_TEST(baudrate_protocol_switch_pps)
 }
 END_TEST
 
+START_TEST(convert_inverse)
+{
+    unsigned i;
+    for (i = 0; i < 256; i++) {
+        // Inverse of inverse is equal to the start value.
+        ck_assert_uint_eq(convert_from_inverse(convert_from_inverse(i)), i);
+    }
+}
+END_TEST
+
 START_TEST(inverse_convention)
 {
     unsigned char inv_atr[] = {
@@ -202,6 +212,7 @@ Suite* session_tests() {
     tcase_add_test(test, protocol_switch_atr);
     tcase_add_test(test, protocol_switch_pps);
     tcase_add_test(test, baudrate_protocol_switch_pps);
+    tcase_add_test(test, convert_inverse);
     tcase_add_test(test, inverse_convention);
     tcase_add_test(test, t0_data_exchange);
     tcase_add_test(test, t1_data_exchange);

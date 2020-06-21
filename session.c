@@ -134,7 +134,7 @@ static enum result analyze_byte(struct current_session *curr,
     return STATE_ERROR;
 }
 
-static unsigned char convert_from_inverse(unsigned char data) {
+unsigned char convert_from_inverse(unsigned char data) {
     unsigned i;
     unsigned char out = 0;
     for (i = 0; i < 8; i++) {

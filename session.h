@@ -63,4 +63,7 @@ void session_reset(struct session *session);
 
 void session_add_byte(struct session *session, unsigned char data);
 
+// For testing
+unsigned char convert_from_inverse(unsigned char data);
+
 #endif // SCSNIFF_SESSION_H
