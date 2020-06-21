@@ -123,10 +123,33 @@ START_TEST(t0_get_response)
     T0_BYTE(&data, 0x03, PACKET_TO_CARD);
     // ACK
     T0_BYTE(&data, 0xC0, PACKET_FROM_CARD);
-    // DF name
+    // Response bytes
     T0_BYTE(&data, 'Y', CONTINUE);
     T0_BYTE(&data, 'a', CONTINUE);
     T0_BYTE(&data, 'y', PACKET_FROM_CARD);
+    // Status bytes
+    T0_BYTE(&data, 0x90, CONTINUE);
+    T0_BYTE(&data, 0x00, PACKET_FROM_CARD);
+}
+END_TEST
+
+START_TEST(t0_unknown_direction)
+{
+    struct data data;
+    data_init(&data);
+    // Unknown command with 4 bytes payload
+    T0_BYTE(&data, 0x00, CONTINUE);
+    T0_BYTE(&data, 0x23, CONTINUE);
+    T0_BYTE(&data, 0x00, CONTINUE);
+    T0_BYTE(&data, 0x00, CONTINUE);
+    T0_BYTE(&data, 0x04, PACKET_TO_CARD);
+    // ACK
+    T0_BYTE(&data, 0x23, PACKET_FROM_CARD);
+    // Payload bytes
+    T0_BYTE(&data, 0x01, CONTINUE);
+    T0_BYTE(&data, 0x02, CONTINUE);
+    T0_BYTE(&data, 0x03, CONTINUE);
+    T0_BYTE(&data, 0x04, PACKET_UNKNOWN);
     // Status bytes
     T0_BYTE(&data, 0x90, CONTINUE);
     T0_BYTE(&data, 0x00, PACKET_FROM_CARD);
@@ -140,6 +163,7 @@ Suite* data_tests() {
     tcase_add_test(test, t0_null_procedure_byte);
     tcase_add_test(test, t0_single_byte_transfer);
     tcase_add_test(test, t0_get_response);
+    tcase_add_test(test, t0_unknown_direction);
     suite_add_tcase(suite, test);
     return suite;
 }
