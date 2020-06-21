@@ -30,7 +30,8 @@ Run `make`.
 
 How to run tests:
 
-With the check library installed, run `make test && ./test`
+With the check library (https://libcheck.github.io/check) installed,
+run `make check`.
 
 
 How to use:

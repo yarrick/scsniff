@@ -1,4 +1,6 @@
-default: scsniff
+.PHONY: all check
+
+all: scsniff
 
 DEPS = result.h atr.h session.h pps.h data.h
 CFLAGS = -std=c99 -Wall -pedantic -Wtype-limits
@@ -15,3 +17,6 @@ scsniff: scsniff.o $(MODULES)
 
 test: test.o $(MODULES) atr_test.o data_test.o session_test.o
 	$(CC) -o $@ -lcheck $^
+
+check: test
+	./test
