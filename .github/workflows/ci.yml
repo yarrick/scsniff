@@ -22,17 +22,17 @@ jobs:
     - name: Build and run tests
       run: make check
 
-  build-macos:
-    runs-on: macos-latest
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Install check
-      run: brew install check
-
-    - name: Build scsniff
-      run: make
-
-    - name: Build and run tests
-      run: make check
+#  build-macos:
+#    runs-on: macos-latest
+#
+#    steps:
+#    - uses: actions/checkout@v2
+#
+#    - name: Install check
+#      run: brew install check
+#
+#    - name: Build scsniff
+#      run: make
+#
+#    - name: Build and run tests
+#      run: make check

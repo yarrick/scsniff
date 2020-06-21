@@ -2,6 +2,11 @@
 
 #include <check.h>
 
+// Only exists in check v0.11 and later.
+#ifndef ck_assert_mem_eq
+#define ck_assert_mem_eq(a,b,n) ck_assert(memcmp((a), (b), (n)) == 0)
+#endif
+
 #define TEST_FD (999)
 #define TEST_BAUDRATE (9600)
 
