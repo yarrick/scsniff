@@ -2,34 +2,20 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <string.h>
-#include <asm/ioctls.h>
-#include <asm/termbits.h>
-#include <sys/ioctl.h>
 #include <sys/time.h>
 
 #include "result.h"
+#include "serial.h"
 #include "session.h"
 
-static void setup_serial(int fd, unsigned speed) {
-    struct termios2 tio;
-    memset(&tio, 0, sizeof(tio));
-    // 8 data bits, readonly, ignore carrier, even parity, 2 stop bits,
-    // custom baud rate.
-    tio.c_cflag = CS8|CREAD|CLOCAL|PARENB|CSTOPB|BOTHER;
-    tio.c_ospeed = speed;
-    ioctl(fd, TCSETS2, &tio);
-}
-
 static int reset_active(int fd) {
-    unsigned int status;
-    if (ioctl(fd, TIOCMGET, &status) != 0) {
+    int reset = serial_reset_active(fd);
+    if (reset == -1) {
         fprintf(stderr, "Connection lost\n");
         exit(1);
     }
-    return status & TIOCM_CAR;
+    return reset;
 }
 
 static struct timeval reset_time;
@@ -37,7 +23,7 @@ static struct timeval reset_time;
 static void wait_reset(int fd) {
     fprintf(stderr, "== Waiting for reset..  ");
     fflush(stderr);
-    ioctl(fd, TIOCMIWAIT, TIOCM_CAR);
+    serial_wait_reset(fd);
     fprintf(stderr, "Done\n");
 }
 
@@ -71,7 +57,7 @@ static void log_message(const char *message) {
 
 int main(int argc, char **argv) {
     if (argc < 2) usage(argv[0]);
-    int fd = open(argv[1], O_RDONLY | O_NOCTTY | O_NDELAY);
+    int fd = serial_open(argv[1]);
     if(fd < 0) {
         fprintf(stderr, "Opening %s ", argv[1]);
         perror("failed");
@@ -88,7 +74,7 @@ int main(int argc, char **argv) {
     fprintf(stderr, "== Opened %s\n", argv[1]);
 
     struct session session;
-    session_init(&session, handle_packet, setup_serial, log_message,
+    session_init(&session, handle_packet, serial_configure, log_message,
                  fd, baudrate);
 
     while (1) {
