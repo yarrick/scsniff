@@ -38,9 +38,8 @@ How to use:
 
 You need a data logger which captures the smartcard communication and converts
 it to RS-232 serial. The smartcard reset pin is expected to be connected to
-Carrier Detect. If your logger has it connected to another pin, update the
-value sent to TIOCMIWAIT ioctl in scsniff.c:wait_reset(). See the ioctl_tty(2)
-manpage for details.
+Carrier Detect or Ring. If your logger has it connected to another pin, update
+the RESET_PIN define in serial.c. See the ioctl_tty(2) manpage for details.
 
 You need to know the starting baud rate being used. This depends on the clock
 frequency used by the reader. If you can measure it while the reader is active,

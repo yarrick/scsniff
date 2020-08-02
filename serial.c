@@ -6,6 +6,9 @@
 #include <asm/termbits.h>
 #include <sys/ioctl.h>
 
+// Reset signaled with Carrier detect or Ring
+#define RESET_PIN (TIOCM_CAR | TIOCM_RNG)
+
 int serial_open(char *port) {
     return open(port, O_RDONLY | O_NOCTTY | O_NDELAY);
 }
@@ -25,9 +28,9 @@ int serial_reset_active(int fd) {
     if (ioctl(fd, TIOCMGET, &status) != 0) {
         return -1;
     }
-    return status & TIOCM_CAR;
+    return status & RESET_PIN;
 }
 
 void serial_wait_reset(int fd) {
-    ioctl(fd, TIOCMIWAIT, TIOCM_CAR);
+    ioctl(fd, TIOCMIWAIT, RESET_PIN);
 }
