@@ -3,7 +3,7 @@
 
 #include <sys/time.h>
 
-#include "result.h"
+#include "packet.h"
 #include "atr.h"
 #include "data.h"
 #include "pps.h"
@@ -18,13 +18,6 @@ enum session_state {
 };
 
 #define SESSION_BUFLEN (512)
-
-struct packet {
-    unsigned char *data;
-    unsigned data_length;
-    enum result result;
-    struct timeval time;
-};
 
 typedef void (*set_baudrate_fn)(int fd, unsigned baudrate);
 

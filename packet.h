@@ -1,5 +1,7 @@
-#ifndef SCSNIFF_RESULT_H
-#define SCSNIFF_RESULT_H
+#ifndef SCSNIFF_PACKET_H
+#define SCSNIFF_PACKET_H
+
+#include <sys/time.h>
 
 enum result {
     CONTINUE = 0,      // Need more bytes
@@ -10,4 +12,11 @@ enum result {
     NOISE = 100,       // Suspected noise, ignored
 };
 
-#endif // SCSNIFF_RESULT_H
+struct packet {
+    unsigned char *data;
+    unsigned data_length;
+    enum result result;
+    struct timeval time;
+};
+
+#endif // SCSNIFF_PACKET_H

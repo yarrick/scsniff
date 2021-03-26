@@ -1,7 +1,7 @@
 #ifndef SCSNIFF_DATA_H
 #define SCSNIFF_DATA_H
 
-#include "result.h"
+#include "packet.h"
 
 enum data_t0_state {
     COMMAND = 0,

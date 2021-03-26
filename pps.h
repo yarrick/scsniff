@@ -1,7 +1,7 @@
 #ifndef SCSNIFF_PPS_H
 #define SCSNIFF_PPS_H
 
-#include "result.h"
+#include "packet.h"
 
 struct pps_msg {
     unsigned bytes_seen;

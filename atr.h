@@ -1,7 +1,7 @@
 #ifndef SCSNIFF_ATR_H
 #define SCSNIFF_ATR_H
 
-#include "result.h"
+#include "packet.h"
 
 #define ATR_TS_DIRECT (0x3B)
 #define ATR_TS_INVERSE (0x3F)
