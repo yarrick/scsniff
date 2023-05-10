@@ -11,6 +11,7 @@ void atr_init(struct atr *atr) {
     atr->bytes_left = 2;
     atr->first_protocol_suggested = NO_VALUE;
     atr->ta1_value = NO_VALUE;
+    atr->ta2_value = NO_VALUE;
 }
 
 static int handle_t_bits(struct atr *atr, unsigned char data, unsigned *complete) {
@@ -44,7 +45,7 @@ static void handle_ta_byte(struct atr *atr, unsigned char data) {
         atr->ta1_value = data;
         break;
     case 2:
-        atr->ta2_seen = 1;
+        atr->ta2_value = data;
         break;
     }
 }
@@ -100,7 +101,10 @@ void atr_result(struct atr *atr, unsigned *new_proto, unsigned *new_speed) {
     if (new_proto && atr->first_protocol_suggested != NO_VALUE) {
         *new_proto = atr->first_protocol_suggested;
     }
-    if (new_speed && atr->ta1_value != NO_VALUE && atr->ta2_seen) {
-        *new_speed = atr->ta1_value;
+    if (new_speed && atr->ta1_value != NO_VALUE) {
+        if (atr->ta2_value != NO_VALUE && (atr->ta2_value & 0x10) == 0) {
+            // Switch if TA2 bit 5 is cleared.
+            *new_speed = atr->ta1_value;
+        }
     }
 }

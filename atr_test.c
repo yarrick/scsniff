@@ -34,9 +34,13 @@ static const struct sample {
         .data = {0x3B, 0x93, 0x95, 0x80, 0x1F, 0xC7, 0x80, 0x31, 0x80, 0x6F},
         .len = 10,
     },
-    { // TA(1) and TA(2) supplied, new speed in use.
+    { // TA(1) with speed, TA(2) with bit 5 cleared, new speed in use.
         .data = {0x3B, 0xD2, 0x13, 0xFF, 0x10, 0x80, 0x07, 0x14},
         .len = 8, .speed = 0x13,
+    },
+    { // TA(1) with speed, TA(2) with bit 5 set, no speed change.
+        .data = {0x3B, 0xD2, 0x13, 0xFF, 0x10, 0x90, 0x07, 0x14},
+        .len = 8,
     },
     { // TD(1) present but as last byte.
         .data = {0x3B, 0x80, 0x00}, .len = 3,

@@ -23,7 +23,7 @@ struct atr {
     unsigned num_historical_bytes;
     unsigned t_cycle;
     unsigned ta1_value;
-    unsigned ta2_seen;
+    unsigned ta2_value;
 };
 
 void atr_init(struct atr *atr);
