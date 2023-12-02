@@ -77,8 +77,10 @@ START_TEST(parse_sample)
     }
     atr_result(&atr, &new_proto, &new_speed);
     ck_assert_uint_eq(new_proto, s->first_protocol);
-    if (new_speed != NO_UPDATE) {
+    if (s->speed) {
         ck_assert_uint_eq(new_speed, s->speed);
+    } else {
+        ck_assert_uint_eq(new_speed, NO_UPDATE);
     }
 }
 END_TEST
