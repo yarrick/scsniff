@@ -12,6 +12,9 @@ permissions:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cc: [clang, gcc]
 
     steps:
     - uses: actions/checkout@v4
@@ -21,6 +24,10 @@ jobs:
 
     - name: Build scsniff
       run: make
+      env:
+        CC: ${{matrix.cc}}
 
     - name: Build and run tests
       run: make check
+      env:
+        CC: ${{matrix.cc}}
