@@ -156,7 +156,7 @@ START_TEST(t0_unknown_direction)
 }
 END_TEST
 
-Suite* data_tests() {
+Suite* data_tests(void) {
     Suite* suite = suite_create("data");
     TCase* test = tcase_create("data");
     tcase_add_test(test, t0_empty_ack);

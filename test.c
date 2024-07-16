@@ -1,10 +1,10 @@
 #include <check.h>
 
-extern Suite *atr_tests();
-extern Suite *data_tests();
-extern Suite *session_tests();
+extern Suite *atr_tests(void);
+extern Suite *data_tests(void);
+extern Suite *session_tests(void);
 
-int main() {
+int main(void) {
     SRunner *runner;
     int failed;
 

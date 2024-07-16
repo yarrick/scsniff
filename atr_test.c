@@ -85,7 +85,7 @@ START_TEST(parse_sample)
 }
 END_TEST
 
-Suite* atr_tests() {
+Suite* atr_tests(void) {
     Suite* suite = suite_create("atr");
     TCase* test = tcase_create("atr");
     tcase_add_loop_test(test, parse_sample, 0, ARRAY_SIZE(samples));

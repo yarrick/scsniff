@@ -32,7 +32,7 @@ static void log_msg(const char *msg) {
     strncpy(last_msg, msg, SESSION_BUFLEN);
 }
 
-static void setup() {
+static void setup(void) {
     session_init(&sess, new_packet, new_baudrate, log_msg,
                  TEST_FD, TEST_BAUDRATE);
     memset(&last_packet, 0, sizeof(last_packet));
@@ -208,7 +208,7 @@ START_TEST(t1_data_exchange)
 }
 END_TEST
 
-Suite* session_tests() {
+Suite* session_tests(void) {
     Suite* suite = suite_create("session");
     TCase* test = tcase_create("session");
     tcase_add_checked_fixture(test, setup, NULL);
