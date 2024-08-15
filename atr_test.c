@@ -67,7 +67,7 @@ START_TEST(parse_sample)
         enum result res = atr_analyze(&atr, s->data[pos], &complete);
         if (pos + 1 == s->len) {
             // Last byte, should signal packet from card, and completed.
-            ck_assert_uint_eq(res, PACKET_FROM_CARD);
+            ck_assert_uint_eq(res, ANSWER_TO_RESET);
             ck_assert_uint_ne(complete, 0);
         } else {
             // Mid-packet, keep going.

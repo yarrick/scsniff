@@ -37,7 +37,7 @@ static enum result t0_transfer_direction(struct data_t0 *data) {
         case 0xE0: // CREATE FILE
         case 0xE2: // APPEND RECORD
         case 0xE4: // DELETE FILE
-            return PACKET_TO_CARD;
+            return T0_DATA_CMD_BODY;
 
         // First data transfer (if any) will be from the card.
         case 0x70: // MANAGE CHANNEL
@@ -46,7 +46,7 @@ static enum result t0_transfer_direction(struct data_t0 *data) {
         case 0xB2: // READ RECORD
         case 0xC0: // GET RESPONSE
         case 0xCA: // GET DATA
-            return PACKET_FROM_CARD;
+            return T0_DATA_RESP_BODY;
 
         case 0xA4: // SELECT
             // ISO 7816-4 Table 39: P1 meaning for SELECT command.
@@ -57,14 +57,14 @@ static enum result t0_transfer_direction(struct data_t0 *data) {
                 case 0x08: // Select from the MF (data = Path without MF id)
                 case 0x09: // Select from the current DF
                            // (data = path without the current DF identifier)
-                    return PACKET_TO_CARD;
+                    return T0_DATA_CMD_BODY;
 
                 case 0x03: // Select parent DF of the current DF (data absent)
-                    return PACKET_FROM_CARD;
+                    return T0_DATA_RESP_BODY;
             }
             break;
     }
-    return PACKET_UNKNOWN;
+    return T0_DATA_UNK_BODY;
 }
 
 enum result data_t0_analyze(struct data *data, unsigned char byte) {
@@ -78,17 +78,17 @@ enum result data_t0_analyze(struct data *data, unsigned char byte) {
                 t0->p1 = byte;
             } else if (t0->command_bytes_seen == 5) {
                 t0->p3_len = byte;
-                if (t0_transfer_direction(t0) == PACKET_FROM_CARD) {
+                if (PACKET_DIR(t0_transfer_direction(t0)) == DIR_FROM_CARD) {
                     // This is response length so 0 means 256.
                     // Note that this direction check has false negatives.
                     if (byte == 0x00) t0->p3_len = 256;
                 }
                 t0->state = PROCEDURE_BYTE;
-                return PACKET_TO_CARD;
+                return T0_DATA_CMD_HEADER;
             }
             break;
         case PROCEDURE_BYTE:
-            if (byte == 0x60) return PACKET_FROM_CARD;
+            if (byte == 0x60) return T0_DATA_NULL;
             if ((byte & 0xF0) == 0x60 || (byte & 0xF0) == 0x90) {
                 t0->state = SW2;
             }
@@ -97,14 +97,14 @@ enum result data_t0_analyze(struct data *data, unsigned char byte) {
                 if (t0->transfer_bytes_seen < t0->p3_len) {
                     t0->state = TRANSFER_ALL;
                 }
-                return PACKET_FROM_CARD;
+                return T0_DATA_ACK;
             }
             if ((byte ^ 0xFF) == t0->ins) {
                 // Expect a single byte if not all sent already
                 if (t0->transfer_bytes_seen < t0->p3_len) {
                     t0->state = TRANSFER_ONE;
                 }
-                return PACKET_FROM_CARD;
+                return T0_DATA_ACK;
             }
             break;
         case SW2:
@@ -112,7 +112,7 @@ enum result data_t0_analyze(struct data *data, unsigned char byte) {
             t0->state = COMMAND;
             t0->command_bytes_seen = 0;
             t0->transfer_bytes_seen = 0;
-            return PACKET_FROM_CARD;
+            return T0_DATA_RESP_SW;
         case TRANSFER_ALL:
             t0->transfer_bytes_seen++;
             if (t0->p3_len == t0->transfer_bytes_seen) {
@@ -139,8 +139,8 @@ enum result data_t1_analyze(struct data *data, unsigned char byte) {
     }
     if (t1->msg_length && t1->bytes_seen == t1->msg_length) {
         // End of block, reset counters for next block
-        enum result res = PACKET_TO_CARD;
-        if (t1->direction_from_card) res = PACKET_FROM_CARD;
+        enum result res = T1_DATA_CMD;
+        if (t1->direction_from_card) res = T1_DATA_RESP;
         t1->bytes_seen = 0;
         t1->msg_length = 0;
         // Flip direction for next packet

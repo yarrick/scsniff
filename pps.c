@@ -15,7 +15,7 @@ static int pps_msg_len(unsigned char pps0) {
 }
 
 static int pps_parse(struct pps_msg *msg, unsigned char data,
-                     enum result packet_direction) {
+                     enum result packet_res) {
     msg->bytes_seen++;
     if (msg->bytes_seen == 2) {
         // PPS0
@@ -25,7 +25,7 @@ static int pps_parse(struct pps_msg *msg, unsigned char data,
         // PPS1
         msg->pps1 = data;
     }
-    if (msg->bytes_seen == msg->msg_length) return packet_direction;
+    if (msg->bytes_seen == msg->msg_length) return packet_res;
     return CONTINUE;
 }
 
@@ -33,12 +33,12 @@ enum result pps_analyze(struct pps *pps, unsigned char data,
                         unsigned *complete) {
     if (pps->proposal.bytes_seen < 2 ||
         pps->proposal.bytes_seen < pps->proposal.msg_length) {
-        return pps_parse(&pps->proposal, data, PACKET_TO_CARD);
+        return pps_parse(&pps->proposal, data, PPS_REQ);
     }
     if (pps->reply.bytes_seen < 2 ||
         pps->reply.bytes_seen < pps->reply.msg_length) {
-        int result = pps_parse(&pps->reply, data, PACKET_FROM_CARD);
-        if (result == PACKET_FROM_CARD && complete) {
+        int result = pps_parse(&pps->reply, data, PPS_RESP);
+        if (result == PPS_RESP && complete) {
             *complete = 1;
         }
         return result;

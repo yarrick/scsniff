@@ -37,12 +37,12 @@ static void handle_packet(struct packet *packet) {
     unsigned i;
     timersub(&packet->time, &reset_time, &diff);
     printf("+%ld.%06lds | ", diff.tv_sec, diff.tv_usec);
-    switch (packet->result) {
-        case NOISE:             printf("NOISE??"); break;
-        case PACKET_TO_CARD:    printf("CARD<<<"); break;
-        case PACKET_FROM_CARD:  printf("CARD>>>"); break;
-        case PACKET_UNKNOWN:    printf("CARD<?>"); break;
-        default:                printf("ERROR!!"); break;
+    switch (PACKET_DIR(packet->result)) {
+        case INVALID_NOISE:   printf("NOISE??"); break;
+        case DIR_TO_CARD:     printf("CARD<<<"); break;
+        case DIR_FROM_CARD:   printf("CARD>>>"); break;
+        case DIR_UNKNOWN:     printf("CARD<?>"); break;
+        default:              printf("ERROR!!"); break;
     }
     printf(" |");
     for (i = 0; i < packet->data_length; i++) {

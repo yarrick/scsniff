@@ -33,7 +33,7 @@ static int handle_t_bits(struct atr *atr, unsigned char data, unsigned *complete
         // No more T bytes or historical bytes
         atr->state = ATR_DONE;
         if (complete) *complete = 1;
-        return PACKET_FROM_CARD;
+        return ANSWER_TO_RESET;
     }
     return CONTINUE;
 }
@@ -91,7 +91,7 @@ enum result atr_analyze(struct atr *atr, unsigned char data, unsigned *complete)
         case WAIT_END:
             atr->state = ATR_DONE;
             if (complete) *complete = 1;
-            return PACKET_FROM_CARD;
+            return ANSWER_TO_RESET;
         default:
             return STATE_ERROR;
     }
